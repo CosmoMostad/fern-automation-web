@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fern Automation — AI Automation for Small Businesses</title>
+  <meta name="description" content="Fern Automation builds AI-powered systems that handle your leads, bookings, reviews, and reports — so you can focus on running your business." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green-dark:   #2D5A3D;
+      --green-mid:    #3D7A55;
+      --green-light:  #52936B;
+      --green-pale:   #A8C49A;
+      --green-bg:     #F0F5F1;
+      --white:        #FFFFFF;
+      --text-dark:    #1A2B1E;
+      --text-mid:     #3D5245;
+      --text-light:   #6B8A72;
+      --border:       #D4E4D8;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text-dark);
+      background: var(--white);
+      line-height: 1.6;
+    }
+
+    a { text-decoration: none; color: inherit; }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--green-dark);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-mid);
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--green-dark); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.6rem 1.4rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--green-dark);
+      color: var(--white);
+    }
+
+    .btn-primary:hover { background: var(--green-mid); }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--green-dark);
+      border: 1.5px solid var(--green-dark);
+    }
+
+    .btn-outline:hover {
+      background: var(--green-bg);
+    }
+
+    .btn-large {
+      padding: 0.85rem 2rem;
+      font-size: 1rem;
+      border-radius: 10px;
+    }
+
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .hamburger span {
+      display: block;
+      width: 22px;
+      height: 2px;
+      background: var(--green-dark);
+      border-radius: 2px;
+      transition: all 0.3s;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: var(--green-bg);
+      padding: 6rem 2rem 5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-pattern {
+      position: absolute;
+      inset: 0;
+      opacity: 0.04;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%232D5A3D' fill-opacity='1'%3E%3Cpath d='M30 0 Q35 15 30 30 Q25 15 30 0Z'/%3E%3Cpath d='M30 30 Q45 25 60 30 Q45 35 30 30Z'/%3E%3Cpath d='M30 30 Q15 25 0 30 Q15 35 30 30Z'/%3E%3Cpath d='M30 30 Q35 45 30 60 Q25 45 30 30Z'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: 60px 60px;
+    }
+
+    .hero-content {
+      position: relative;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 0.3rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--green-light);
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      font-weight: 800;
+      line-height: 1.15;
+      color: var(--text-dark);
+      margin-bottom: 1.25rem;
+    }
+
+    .hero h1 span { color: var(--green-dark); }
+
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--text-mid);
+      max-width: 520px;
+      margin: 0 auto 2.5rem;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* ── PROBLEM ── */
+    .problem {
+      padding: 5rem 2rem;
+      max-width: 680px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .problem h2 {
+      font-size: 1.9rem;
+      font-weight: 700;
+      line-height: 1.3;
+      color: var(--text-dark);
+      margin-bottom: 1.25rem;
+    }
+
+    .problem p {
+      font-size: 1.05rem;
+      color: var(--text-mid);
+      line-height: 1.75;
+    }
+
+    /* ── SERVICES ── */
+    .services {
+      background: var(--green-bg);
+      padding: 5rem 2rem;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .section-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--green-light);
+      margin-bottom: 0.75rem;
+    }
+
+    .section-header h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text-dark);
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .service-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .service-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(45, 90, 61, 0.1);
+    }
+
+    .service-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--green-bg);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .service-card h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 0.5rem;
+    }
+
+    .service-card p {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      line-height: 1.6;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .how {
+      padding: 5rem 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 3rem;
+      position: relative;
+    }
+
+    .step {
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+      padding-bottom: 2.5rem;
+      position: relative;
+    }
+
+    .step:last-child { padding-bottom: 0; }
+
+    .step-line {
+      position: absolute;
+      left: 23px;
+      top: 48px;
+      bottom: 0;
+      width: 2px;
+      background: var(--border);
+    }
+
+    .step:last-child .step-line { display: none; }
+
+    .step-num {
+      width: 48px;
+      height: 48px;
+      background: var(--green-dark);
+      color: var(--white);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1rem;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-text h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 0.4rem;
+      padding-top: 0.65rem;
+    }
+
+    .step-text p {
+      font-size: 0.95rem;
+      color: var(--text-mid);
+    }
+
+    /* ── TESTIMONIALS ── */
+    .testimonials {
+      background: var(--green-bg);
+      padding: 5rem 2rem;
+    }
+
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      max-width: 1000px;
+      margin: 2.5rem auto 0;
+    }
+
+    .testimonial-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+    }
+
+    .stars {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 1rem;
+    }
+
+    .testimonial-card blockquote {
+      font-size: 0.95rem;
+      color: var(--text-mid);
+      line-height: 1.7;
+      margin-bottom: 1.25rem;
+      font-style: italic;
+    }
+
+    .testimonial-author {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    .testimonial-biz {
+      font-size: 0.8rem;
+      color: var(--text-light);
+    }
+
+    /* ── CTA ── */
+    .cta-section {
+      padding: 6rem 2rem;
+      text-align: center;
+      background: var(--green-dark);
+      color: var(--white);
+    }
+
+    .cta-section h2 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+    }
+
+    .cta-section p {
+      font-size: 1.05rem;
+      opacity: 0.8;
+      max-width: 480px;
+      margin: 0 auto 2.5rem;
+    }
+
+    .btn-white {
+      background: var(--white);
+      color: var(--green-dark);
+    }
+
+    .btn-white:hover { background: var(--green-bg); }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--text-dark);
+      color: var(--green-pale);
+      padding: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.85rem;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .footer-links a {
+      color: var(--green-pale);
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .footer-links a:hover { opacity: 1; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .nav-links.open {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 64px;
+        left: 0;
+        right: 0;
+        background: var(--white);
+        border-bottom: 1px solid var(--border);
+        padding: 1rem 2rem;
+        gap: 1rem;
+      }
+      .hamburger { display: flex; }
+      nav { position: relative; flex-wrap: wrap; height: auto; padding: 1rem 2rem; }
+      .hero { padding: 4rem 1.5rem 3.5rem; }
+      footer { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C12 2 7 7 7 12C7 14.5 8.5 16.8 12 18C15.5 16.8 17 14.5 17 12C17 7 12 2 12 2Z" fill="#2D5A3D"/>
+      <path d="M12 18C12 18 9 20 8 22" stroke="#52936B" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M7 10C7 10 4 9 2 11" stroke="#A8C49A" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M17 10C17 10 20 9 22 11" stroke="#A8C49A" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    Fern Automation
+  </a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#services">Services</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#contact"><a class="btn btn-primary" href="mailto:hello@fernautomation.com">Book a Call</a></a></li>
+  </ul>
+  <div class="hamburger" onclick="document.getElementById('navLinks').classList.toggle('open')">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-pattern"></div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" fill="#52936B"/></svg>
+      AI Automation for Small Businesses
+    </div>
+    <h1>Your business,<br/><span>running on autopilot.</span></h1>
+    <p>Fern Automation builds AI systems that handle your leads, bookings, reviews, and reports — while you focus on what you actually do.</p>
+    <div class="hero-buttons">
+      <a href="mailto:hello@fernautomation.com" class="btn btn-primary btn-large">Book a Free Call</a>
+      <a href="#how" class="btn btn-outline btn-large">See How It Works</a>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section class="problem">
+  <h2>You did not start a business to answer the same questions all day.</h2>
+  <p>Chasing leads, writing review replies, waiting for forms to roll in, sending the same follow-up email for the hundredth time. That is not why you built something. Fern Automation takes all of it off your plate — quietly running in the background so you never have to think about it again.</p>
+</section>
+
+<!-- SERVICES -->
+<section class="services" id="services">
+  <div class="section-header">
+    <div class="section-label">What We Build</div>
+    <h2>Four systems. Zero manual work.</h2>
+  </div>
+  <div class="services-grid">
+
+    <div class="service-card">
+      <div class="service-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2D5A3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+      <h3>AI Chatbot</h3>
+      <p>Answers questions, qualifies leads, and books appointments 24/7. Never miss an inquiry again — even at midnight.</p>
+    </div>
+
+    <div class="service-card">
+      <div class="service-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2D5A3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/>
+        </svg>
+      </div>
+      <h3>Lead Follow-Up</h3>
+      <p>Every form submission gets a personalized reply in under 60 seconds — before they even think about calling a competitor.</p>
+    </div>
+
+    <div class="service-card">
+      <div class="service-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2D5A3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+      </div>
+      <h3>Review Responses</h3>
+      <p>We monitor your Google reviews and draft thoughtful, on-brand responses automatically. Your reputation, protected.</p>
+    </div>
+
+    <div class="service-card">
+      <div class="service-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2D5A3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+        </svg>
+      </div>
+      <h3>Weekly Reports</h3>
+      <p>A clean summary of leads, bookings, and reviews lands in your inbox every Monday morning. Know your numbers at a glance.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="section-header">
+    <div class="section-label">The Process</div>
+    <h2>Up and running in days, not months.</h2>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-line"></div>
+      <div class="step-text">
+        <h3>We audit your business</h3>
+        <p>We look at your current setup — website, booking flow, reviews, lead capture — and identify exactly where you are losing time and customers.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-line"></div>
+      <div class="step-text">
+        <h3>We build your automations</h3>
+        <p>Custom-built for your business. We connect to your existing tools and have everything live within a week, no disruption to your operations.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-line"></div>
+      <div class="step-text">
+        <h3>Your business runs itself</h3>
+        <p>Leads followed up. Bookings captured. Reviews handled. Reports sent. You focus on your clients — we handle everything else.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials">
+  <div class="section-header">
+    <div class="section-label">What Clients Say</div>
+    <h2>Trusted by local businesses across the Pacific Northwest.</h2>
+  </div>
+  <div class="testimonials-grid">
+    <div class="testimonial-card">
+      <div class="stars">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#52936B"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#52936B"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#52936B"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#52936B"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#52936B"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <blockquote>"We were losing bookings after hours constantly. Now our chatbot handles everything — I woke up to three new appointments booked overnight on day one."</blockquote>
+      <div class="testimonial-author">Sarah K.</div>
+      <div class="testimonial-biz">Owner, Glow Aesthetics — Seattle, WA</div>
+    </div>
+    <div class="testimonial-card">
+      <div class="stars">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#52936B"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#52936B"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#52936B"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#52936B"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#52936B"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <blockquote>"The Monday morning report is the best thing we have added to our practice. I know exactly where we stand before I even get to the office."</blockquote>
+      <div class="testimonial-author">Dr. Marcus T.</div>
+      <div class="testimonial-biz">Owner, Eastside Dental — Bellevue, WA</div>
+    </div>
+    <div class="testimonial-card">
+      <div class="stars">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#52936B"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#52936B"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#52936B"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#52936B"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#52936B"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <blockquote>"Responding to Google reviews used to take me 30 minutes a week. Now it just happens. Honestly I forgot it was even running until someone mentioned how fast we respond."</blockquote>
+      <div class="testimonial-author">Jenna M.</div>
+      <div class="testimonial-biz">Owner, Evergreen Fitness — Kirkland, WA</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="contact">
+  <h2>Ready to automate?</h2>
+  <p>Book a free 15-minute call. We will audit your business and tell you exactly what we would build — no pitch, no pressure.</p>
+  <a href="mailto:hello@fernautomation.com" class="btn btn-white btn-large">Book a Free Call</a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="nav-logo" style="color: var(--green-pale);">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2C12 2 7 7 7 12C7 14.5 8.5 16.8 12 18C15.5 16.8 17 14.5 17 12C17 7 12 2 12 2Z" fill="#A8C49A"/>
+    </svg>
+    Fern Automation
+  </div>
+  <span style="opacity:0.5;">© 2026 Fern Automation</span>
+  <div class="footer-links">
+    <a href="/privacy">Privacy Policy</a>
+    <a href="/terms">Terms</a>
+  </div>
+</footer>
+
+</body>
+</html>
