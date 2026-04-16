@@ -322,6 +322,124 @@
       .svc-row:nth-child(even) .svc-visual { order: 2; }
     }
 
+    /* ─── VOICE ENGINE ─── */
+    .voice-section {
+      padding: 6rem 5%;
+      background: var(--g9);
+    }
+    .voice-inner { max-width: 1100px; margin: 0 auto; }
+    .voice-header { margin-bottom: 3.5rem; }
+    .voice-header h2 { font-size: clamp(2rem, 3.5vw, 2.6rem); margin-bottom: 0.75rem; }
+    .voice-header p { font-size: 1rem; color: var(--ink3); max-width: 520px; line-height: 1.7; }
+
+    .voice-demo {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 4px 40px rgba(29,61,42,0.10);
+      overflow: hidden;
+    }
+    .voice-demo-top {
+      display: grid; grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid var(--g7);
+    }
+    .voice-panel {
+      padding: 2.25rem 2rem;
+    }
+    .voice-panel:first-child {
+      border-right: 1px solid var(--g7);
+    }
+    .voice-panel-label {
+      font-size: 0.68rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+    }
+    .voice-panel:first-child .voice-panel-label { color: var(--ink4); }
+    .voice-panel:last-child .voice-panel-label { color: var(--g3); }
+    .voice-review-card {
+      background: var(--g9);
+      border-radius: 12px; padding: 1.25rem 1.25rem 1rem;
+    }
+    .voice-review-top { display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem; }
+    .voice-reviewer-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.68rem; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+    .voice-reviewer-name { font-size: 0.82rem; font-weight: 600; color: var(--ink2); }
+    .voice-reviewer-stars { font-size: 0.72rem; color: var(--gold); letter-spacing: 1px; }
+    .voice-review-text { font-size: 0.88rem; color: var(--ink3); line-height: 1.6; margin-bottom: 1rem; }
+    .voice-generic-reply {
+      border-top: 1px solid var(--g7);
+      padding-top: 1rem;
+      font-size: 0.82rem; color: var(--ink3); line-height: 1.6;
+      font-style: italic;
+    }
+    .voice-generic-label {
+      font-size: 0.65rem; font-weight: 600; color: var(--ink4);
+      text-transform: uppercase; letter-spacing: 0.07em;
+      margin-bottom: 6px; display: block;
+    }
+    .voice-fern-reply {
+      background: var(--g8);
+      border-radius: 12px; padding: 1.25rem;
+      border-left: 3px solid var(--g4);
+    }
+    .voice-fern-reply p {
+      font-size: 0.88rem; color: var(--ink2); line-height: 1.65;
+    }
+    .voice-fern-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 0.75rem;
+      font-size: 0.68rem; font-weight: 600; color: var(--g3);
+    }
+    .voice-fern-badge::before { content: ''; width: 6px; height: 6px; background: var(--g4); border-radius: 50%; }
+
+    .voice-tabs {
+      padding: 1.25rem 2rem;
+      display: flex; gap: 0.75rem;
+      border-top: 1px solid var(--g7);
+      background: var(--g9);
+      flex-wrap: wrap;
+    }
+    .voice-tab {
+      padding: 6px 16px; border-radius: 100px;
+      font-size: 0.78rem; font-weight: 600;
+      cursor: pointer; border: 1.5px solid var(--g7);
+      background: #fff; color: var(--ink3);
+      transition: all .15s;
+    }
+    .voice-tab.active {
+      background: var(--g2); color: #fff; border-color: var(--g2);
+    }
+
+    .voice-callout {
+      margin-top: 2.5rem;
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 1.25rem;
+    }
+    .voice-callout-card {
+      background: #fff; border-radius: 14px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 12px rgba(29,61,42,0.07);
+    }
+    .voice-callout-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--g8);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1rem; font-size: 1rem;
+    }
+    .voice-callout-card h4 {
+      font-family: 'Inter', sans-serif; font-size: 0.88rem;
+      font-weight: 700; color: var(--ink); margin-bottom: 0.4rem;
+    }
+    .voice-callout-card p { font-size: 0.82rem; color: var(--ink3); line-height: 1.6; }
+
+    @media(max-width: 700px) {
+      .voice-demo-top { grid-template-columns: 1fr; }
+      .voice-panel:first-child { border-right: none; border-bottom: 1px solid var(--g7); }
+      .voice-callout { grid-template-columns: 1fr; }
+    }
+
     /* ─── DARK BAND ─── */
     .dark-band {
       background: var(--g1);
@@ -465,6 +583,7 @@
   </a>
   <ul class="nav-mid" id="navLinks">
     <li><a href="#services">Services</a></li>
+    <li><a href="#voice-engine">Voice Engine</a></li>
     <li><a href="#how">How It Works</a></li>
     <li><a href="#reviews">Reviews</a></li>
     <li><a href="https://calendly.com/cosmo-fernautomation/30min" target="_blank" class="nav-cta">Book a Free Call</a></li>
@@ -673,6 +792,112 @@
 
   </div>
 </section>
+
+<!-- VOICE ENGINE -->
+<section class="voice-section" id="voice-engine">
+  <div class="voice-inner">
+    <div class="voice-header">
+      <h2>AI that sounds like <em>you.</em></h2>
+      <p>We don't give your customers a generic chatbot voice. We read your past responses, learn exactly how you write, and every reply sounds like it came from you — not a machine.</p>
+    </div>
+
+    <div class="voice-demo">
+      <!-- Demo panels -->
+      <div class="voice-demo-top" id="voiceDemoTop">
+        <!-- Left: the review -->
+        <div class="voice-panel">
+          <div class="voice-panel-label">New review received</div>
+          <div class="voice-review-card">
+            <div class="voice-review-top">
+              <div class="voice-reviewer-avatar" style="background:#6B7EA3;" id="reviewerAvatar">JT</div>
+              <div>
+                <div class="voice-reviewer-name" id="reviewerName">James T.</div>
+                <div class="voice-reviewer-stars" id="reviewerStars">★★★★★</div>
+              </div>
+            </div>
+            <p class="voice-review-text" id="reviewText">Course was in incredible shape last Saturday. The staff at the pro shop went above and beyond helping me pick out the right clubs for the back nine. Best round I've had this year.</p>
+            <div class="voice-generic-reply">
+              <span class="voice-generic-label">Generic AI reply</span>
+              <span id="genericReply">Thank you for your review! We're glad you had a positive experience at our facility. We hope to see you again soon!</span>
+            </div>
+          </div>
+        </div>
+        <!-- Right: Fern response -->
+        <div class="voice-panel">
+          <div class="voice-panel-label">Fern responds in your voice</div>
+          <div class="voice-fern-reply">
+            <p id="fernReply">Wow, thank you James! Mornings on the back nine really are something special — so glad you could experience that. We'll pass your kind words along to our pro shop team, they work hard to make sure every golfer walks away with the right setup. Hope to see you back out here soon!</p>
+            <span class="voice-fern-badge">Matched to your style · Sent automatically</span>
+          </div>
+        </div>
+      </div>
+      <!-- Tabs -->
+      <div class="voice-tabs">
+        <span class="voice-tab active" onclick="switchReview(0, this)">5-Star Review</span>
+        <span class="voice-tab" onclick="switchReview(1, this)">1-Star Complaint</span>
+        <span class="voice-tab" onclick="switchReview(2, this)">Mixed Feedback</span>
+      </div>
+    </div>
+
+    <!-- 3 callout cards below -->
+    <div class="voice-callout">
+      <div class="voice-callout-card">
+        <div class="voice-callout-icon">🎙️</div>
+        <h4>We learn your voice first</h4>
+        <p>We read your past responses — reviews, emails, whatever you have — and build a full style profile before writing a single word.</p>
+      </div>
+      <div class="voice-callout-card">
+        <div class="voice-callout-icon">✍️</div>
+        <h4>Every response sounds like you</h4>
+        <p>Your tone, your phrasing, how you handle a complaint vs. a compliment. Customers will think you wrote it yourself.</p>
+      </div>
+      <div class="voice-callout-card">
+        <div class="voice-callout-icon">⚡</div>
+        <h4>Runs without you</h4>
+        <p>New review comes in, response goes out. No login, no drafts to approve. Your reputation stays active around the clock.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const reviews = [
+    {
+      avatar: 'JT', avatarColor: '#6B7EA3',
+      name: 'James T.', stars: '★★★★★',
+      review: 'Course was in incredible shape last Saturday. The staff at the pro shop went above and beyond helping me pick out the right clubs for the back nine. Best round I\'ve had this year.',
+      generic: 'Thank you for your review! We\'re glad you had a positive experience at our facility. We hope to see you again soon!',
+      fern: 'Wow, thank you James! Mornings on the back nine really are something special — so glad you could experience that. We\'ll pass your kind words along to our pro shop team, they work hard to make sure every golfer walks away with the right setup. Hope to see you back out here soon!'
+    },
+    {
+      avatar: 'RK', avatarColor: '#A36B6B',
+      name: 'Rachel K.', stars: '★☆☆☆☆',
+      review: 'Waited over an hour on the 7th hole. Nobody seemed to care about pace of play. Completely ruined what should have been a nice afternoon. Very disappointed.',
+      generic: 'We apologize for any inconvenience you experienced. Customer satisfaction is important to us. Please contact our support team.',
+      fern: 'Rachel, we\'re really sorry — an hour wait on the 7th is not okay, and we completely understand your frustration. That\'s not the experience we want anyone to have here. We\'ve flagged this with our course marshal team and are adjusting our weekend tee spacing starting this Saturday. We\'d love a chance to make it right. Please reach out to us directly at the pro shop and we\'ll set you up with a complimentary round on us.'
+    },
+    {
+      avatar: 'DM', avatarColor: '#8A6BA3',
+      name: 'David M.', stars: '★★★★☆',
+      review: 'Beautiful course, really scenic views on the back nine. Greens were a little slow but the food at the turn more than made up for it. Would come back.',
+      generic: 'Thank you for your feedback! We appreciate your comments and will take them into consideration to improve our services.',
+      fern: 'Thanks David! The back nine views really are hard to beat — glad those made an impression. You\'re not wrong about the greens, we\'ve had some weather challenges this week but our grounds crew is already on it. Really happy the food at the turn hit the spot though! Come back and see us when the greens are rolling fast — we think you\'ll notice the difference.'
+    }
+  ];
+
+  function switchReview(idx, tab) {
+    document.querySelectorAll('.voice-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const r = reviews[idx];
+    document.getElementById('reviewerAvatar').textContent = r.avatar;
+    document.getElementById('reviewerAvatar').style.background = r.avatarColor;
+    document.getElementById('reviewerName').textContent = r.name;
+    document.getElementById('reviewerStars').textContent = r.stars;
+    document.getElementById('reviewText').textContent = r.review;
+    document.getElementById('genericReply').textContent = r.generic;
+    document.getElementById('fernReply').textContent = r.fern;
+  }
+</script>
 
 <!-- DARK BAND -->
 <div class="dark-band">
