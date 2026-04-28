@@ -21,14 +21,25 @@ body {
 }
 
 a {
-  color: inherit;
+  color: #2D5A3D;
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-underline-offset: 3px;
   text-decoration-thickness: 1px;
+  text-decoration-color: #2D5A3D;
 }
 
 a:hover {
   text-decoration-thickness: 2px;
+  color: #1C3D2A;
+}
+
+a.no-underline {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.no-underline:hover {
+  color: #2D5A3D;
 }
 
 h1, h2, h3, h4 {

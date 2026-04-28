@@ -12,6 +12,8 @@ const config: Config = {
         paper: "#ffffff",
         rule: "#e5e5e5",
         muted: "#666666",
+        fern: "#2D5A3D",
+        "fern-soft": "#3D7A55",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],

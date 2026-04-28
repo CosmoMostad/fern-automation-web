@@ -39,7 +39,7 @@ export default function TableOfContents({ items }: Props) {
 
   return (
     <nav className="sticky top-12 text-sm">
-      <div className="text-xs uppercase tracking-[0.18em] text-muted mb-4">
+      <div className="text-xs uppercase tracking-[0.18em] text-fern font-medium mb-4">
         Contents
       </div>
       <ul className="space-y-2">
@@ -47,10 +47,10 @@ export default function TableOfContents({ items }: Props) {
           <li key={item.id}>
             <a
               href={`#${item.id}`}
-              className={`no-underline block leading-snug transition-opacity ${
+              className={`no-underline block leading-snug transition-colors border-l-2 pl-3 -ml-3 ${
                 active === item.id
-                  ? "text-ink opacity-100"
-                  : "text-muted opacity-70 hover:opacity-100"
+                  ? "text-ink border-fern"
+                  : "text-muted border-transparent hover:text-ink"
               }`}
             >
               {item.label}

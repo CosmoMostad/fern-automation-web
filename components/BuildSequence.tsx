@@ -9,7 +9,7 @@ type Props = {
 
 export default function BuildSequence({ phases }: Props) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 border-t border-ink">
+    <div className="grid grid-cols-1 md:grid-cols-3 border-t-2 border-fern">
       {phases.map((p, i) => (
         <div
           key={i}
@@ -17,7 +17,7 @@ export default function BuildSequence({ phases }: Props) {
             i < phases.length - 1 ? "md:border-r border-rule" : ""
           }`}
         >
-          <h4 className="text-xs uppercase tracking-[0.16em] font-semibold mb-3">
+          <h4 className="text-xs uppercase tracking-[0.16em] font-semibold text-fern mb-3">
             {p.phase}
           </h4>
           <ul className="space-y-1.5 text-sm leading-snug">

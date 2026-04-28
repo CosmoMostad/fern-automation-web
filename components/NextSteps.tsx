@@ -7,7 +7,7 @@ type Props = {
 
 export default function NextSteps({ email, contactName, body }: Props) {
   return (
-    <div className="border-t border-ink pt-8 mt-8">
+    <div className="border-t-2 border-fern pt-8 mt-8">
       <h2 className="text-xl md:text-2xl font-semibold tracking-tight mb-4">
         Next steps
       </h2>

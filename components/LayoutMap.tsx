@@ -20,7 +20,7 @@ export default function LayoutMap({ columns }: Props) {
     <div className={`grid grid-cols-1 sm:grid-cols-2 ${desktop} gap-6 md:gap-8`}>
       {columns.map((col, i) => (
         <div key={i}>
-          <h4 className="text-xs uppercase tracking-[0.14em] font-semibold pb-2 mb-3 border-b border-ink">
+          <h4 className="text-xs uppercase tracking-[0.14em] font-semibold pb-2 mb-3 border-b-2 border-fern text-fern">
             {col.heading}
           </h4>
           <ul className="space-y-1.5 text-sm leading-snug">
