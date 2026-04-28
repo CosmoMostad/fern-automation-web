@@ -188,6 +188,7 @@ export default function WscPilotPage() {
           Cost
         </h2>
         <div className="space-y-4 text-base md:text-lg leading-relaxed max-w-prose">
+          <p>{wscCosts.build}</p>
           <p>{wscCosts.monthly}</p>
           <p>{wscCosts.outside}</p>
           <p>{wscCosts.infra}</p>

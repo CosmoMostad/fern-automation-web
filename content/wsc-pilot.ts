@@ -136,7 +136,7 @@ export const wscDecisions = [
 
 export const wscCosts = {
   build:
-    "Build cost: $0. Free agent pilot — Fern absorbs build time in exchange for being the named first-vertical case study.",
+    "Build cost: $0. Fern is early. We'd rather absorb the build cost and learn alongside WSC on a real pilot than charge for a system that's still proving itself.",
   monthly:
     "Monthly cost (Phase 1, three agents live): roughly $20–40/month, all token costs paid through to the AI provider. Marked clearly as token costs.",
   outside:
