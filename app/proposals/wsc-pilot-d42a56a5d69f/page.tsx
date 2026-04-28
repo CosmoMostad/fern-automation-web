@@ -3,13 +3,14 @@ import ProposalLayout from "@/components/ProposalLayout";
 import Hero from "@/components/Hero";
 import LayoutMap from "@/components/LayoutMap";
 import Accordion from "@/components/Accordion";
-import BuildSequence from "@/components/BuildSequence";
 import NextSteps from "@/components/NextSteps";
 import {
   wscMeta,
   wscLayoutMap,
   wscAgents,
-  wscBuildSequence,
+  wscRoadmap,
+  wscRisks,
+  wscCosts,
 } from "@/content/wsc-pilot";
 
 export const metadata: Metadata = {
@@ -20,10 +21,13 @@ export const metadata: Metadata = {
 
 const toc = [
   { id: "layout", label: "Where the agents plug in" },
-  { id: "agents", label: "The six agents" },
+  { id: "agents", label: "The five agents" },
+  { id: "roadmap", label: "Launch roadmap" },
+  { id: "risks", label: "Top risks at launch" },
   { id: "how", label: "How Fern works" },
+  { id: "cost", label: "Cost" },
   { id: "data", label: "Data and security" },
-  { id: "next", label: "Next steps & requirements" },
+  { id: "next", label: "Next steps" },
 ];
 
 export default function WscPilotPage() {
@@ -33,6 +37,7 @@ export default function WscPilotPage() {
         title={wscMeta.title}
         preparedFor={wscMeta.preparedFor}
         date={wscMeta.date}
+        intro="A controlled fast-launch pilot. Ship three agents in three to four weeks, keep humans in the loop on every outbound message, measure what breaks in real usage, and tighten the system as we go. Two more agents follow in Phase 2 and Phase 3 once the gating items are in place."
       />
 
       <section id="layout" className="mb-16 scroll-mt-12">
@@ -40,7 +45,7 @@ export default function WscPilotPage() {
           Where the agents plug in
         </h2>
         <p className="text-base md:text-lg leading-relaxed mb-8 max-w-prose">
-          Six agents, grouped by what they do for the business.
+          Five agents, grouped by launch phase.
         </p>
         <LayoutMap columns={wscLayoutMap} />
         <p className="text-base md:text-lg leading-relaxed mt-8 max-w-prose">
@@ -56,7 +61,7 @@ export default function WscPilotPage() {
 
       <section id="agents" className="mb-16 scroll-mt-12">
         <h2 className="text-xl md:text-2xl font-semibold tracking-tight mb-6">
-          The six agents
+          The five agents
         </h2>
         <Accordion
           items={wscAgents.map((a) => ({
@@ -68,23 +73,6 @@ export default function WscPilotPage() {
                 {a.body.map((paragraph, i) => (
                   <p key={i}>{paragraph}</p>
                 ))}
-                {a.reasons && (
-                  <div className="space-y-3 pt-1">
-                    {a.reasons.map((r, i) => (
-                      <div key={i}>
-                        <p>
-                          <strong>{r.title}</strong> {r.body}
-                        </p>
-                      </div>
-                    ))}
-                    <p>
-                      The work that actually moves this needle is paid
-                      advertising plus a landing page that captures inbound
-                      interest — better handled by a marketing agency, not by
-                      Fern. Sits outside the agent scope.
-                    </p>
-                  </div>
-                )}
                 {a.tail && (
                   <p className="text-sm text-muted pt-1">{a.tail}</p>
                 )}
@@ -92,6 +80,55 @@ export default function WscPilotPage() {
             ),
           }))}
         />
+      </section>
+
+      <section id="roadmap" className="mb-16 scroll-mt-12">
+        <h2 className="text-xl md:text-2xl font-semibold tracking-tight mb-4">
+          Launch roadmap
+        </h2>
+        <p className="text-base md:text-lg leading-relaxed max-w-prose mb-8">
+          Realistic timelines from the day WSC approves the pilot. Each phase
+          ships independently — Phase 2 and 3 are gated on operational items
+          WSC controls, not on the agent build.
+        </p>
+        <div className="space-y-8">
+          {wscRoadmap.map((phase, i) => (
+            <div
+              key={i}
+              className="border-t-2 border-fern pt-5 max-w-prose"
+            >
+              <h3 className="text-xs uppercase tracking-[0.16em] font-semibold text-fern mb-3">
+                {phase.phase}
+              </h3>
+              <p className="text-base md:text-lg leading-relaxed mb-4">
+                {phase.summary}
+              </p>
+              <ul className="space-y-1.5 text-sm md:text-base leading-snug list-disc pl-5">
+                {phase.deliverables.map((d, j) => (
+                  <li key={j}>{d}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="risks" className="mb-16 scroll-mt-12">
+        <h2 className="text-xl md:text-2xl font-semibold tracking-tight mb-4">
+          Top risks at launch
+        </h2>
+        <p className="text-base md:text-lg leading-relaxed max-w-prose mb-6">
+          The three risks that matter most, and the controls that hold them.
+        </p>
+        <div className="space-y-5 max-w-prose">
+          {wscRisks.map((r, i) => (
+            <div key={i}>
+              <p className="text-base md:text-lg leading-relaxed">
+                <strong>{r.title}</strong> {r.body}
+              </p>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section id="how" className="mb-16 scroll-mt-12">
@@ -122,11 +159,13 @@ export default function WscPilotPage() {
             guidelines, but as guarantees:
           </p>
           <p>
-            <strong>Nothing fabricated.</strong> Agents only write from
-            grounded data. If a fact isn't in the system — a class time, a
-            price, a policy, a kid's tournament result — the agent escalates
-            rather than guesses. The AI model is wired so it cannot send
-            anything that isn't backed by confirmed data.
+            <strong>Grounded responses only.</strong> Agents are designed to
+            respond from approved sources — WSC's knowledge base, CourtReserve,
+            public tournament data — and to escalate when the answer isn't
+            there, rather than guessing. Accuracy is directly a function of
+            how complete those approved sources are; the more WSC feeds the
+            knowledge base, the sharper the responses get. The system is
+            designed to err toward escalation, not improvisation.
           </p>
           <p>
             <strong>Always overridable.</strong> Any staffer can take over any
@@ -135,11 +174,24 @@ export default function WscPilotPage() {
           </p>
           <p>
             <strong>Supervised in the early weeks.</strong> Every drafted
-            email lands in the approval queue. After fifty consecutive sends
-            of a given draft type with no staff edits, that type begins to
-            auto-send. Sensitive types — rejection emails, cold outreach,
-            complaint responses — stay supervised forever, by design.
+            email lands in the approval queue. WSC decides — when comfort and
+            track record are there — which draft types to graduate to
+            auto-send and on what cadence. Sensitive types like rejection
+            emails, cold outreach, and complaint responses stay supervised
+            forever, by design.
           </p>
+        </div>
+      </section>
+
+      <section id="cost" className="mb-16 scroll-mt-12">
+        <h2 className="text-xl md:text-2xl font-semibold tracking-tight mb-4">
+          Cost
+        </h2>
+        <div className="space-y-4 text-base md:text-lg leading-relaxed max-w-prose">
+          <p>{wscCosts.build}</p>
+          <p>{wscCosts.monthly}</p>
+          <p>{wscCosts.outside}</p>
+          <p>{wscCosts.infra}</p>
         </div>
       </section>
 
@@ -180,64 +232,17 @@ export default function WscPilotPage() {
       </section>
 
       <section id="next" className="scroll-mt-12">
-        <h2 className="text-xl md:text-2xl font-semibold tracking-tight mb-4">
-          Next steps & requirements
-        </h2>
-        <div className="space-y-4 text-base md:text-lg leading-relaxed max-w-prose mb-8">
-          <p>
-            <strong>Coach scheduling.</strong> Today, coaches negotiate
-            private lessons 1-on-1 over email and text. For Agent #2 to save
-            real time, coaches set fixed weekly availability windows in the
-            Console / CourtReserve (Bellevue Pickleball Club does this if you
-            want an example on their website), and students book those
-            windows. The agent fills the gaps and handles the back-and-forth.
-          </p>
-          <p>
-            <strong>Content provisioning.</strong> Email and structure set
-            up; email templates for golf outreach and general outreach for
-            Tier 1 leads coming in. Tier 1 class structuring — the rules for
-            which kid goes in which class based on age, UTR, cross-rally
-            rating, tournament volume, and schooling preference. Same
-            playbook a coach would use, written down so the agent can apply
-            it consistently.
-          </p>
-          <p>
-            <strong>Access to the right systems.</strong> API access to
-            CourtReserve; an inbox the agents can read and send from for each
-            scope (Tier 1, golf, general WSC); the e-sig tool.
-          </p>
-          <p>
-            <strong>Sample emails — anonymized is fine.</strong> 10–20 real
-            past email threads per agent type. This is the tone-training
-            data. Agents that write like real WSC staff are agents that work;
-            agents trained on generic templates aren't.
-          </p>
-          <p>
-            <strong>A point person who owns the relationship.</strong>{" "}
-            Someone who can answer questions during the build, approve drafts
-            during the supervised phase, and decide when escalations need
-            owner attention.
-          </p>
-        </div>
-
-        <h3 className="text-base md:text-lg font-semibold tracking-tight mb-3">
-          Build sequence
-        </h3>
-        <BuildSequence phases={wscBuildSequence} />
-
-        <div className="mt-12">
-          <NextSteps
-            email={wscMeta.contactEmail}
-            contactName={wscMeta.contactName}
-            body={
-              <p>
-                If this looks right, reply to the email this proposal came in
-                on and we'll get the working session scheduled to lock the
-                outstanding pieces above.
-              </p>
-            }
-          />
-        </div>
+        <NextSteps
+          email={wscMeta.contactEmail}
+          contactName={wscMeta.contactName}
+          body={
+            <p>
+              If this looks right, reply to the email this proposal came in
+              on and we'll get the working session scheduled to kick off the
+              Phase 1 build.
+            </p>
+          }
+        />
       </section>
     </ProposalLayout>
   );
