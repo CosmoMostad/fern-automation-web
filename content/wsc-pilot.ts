@@ -8,142 +8,123 @@ export const wscMeta = {
 
 export const wscLayoutMap = [
   {
-    heading: "Grow & retain",
-    items: ["1 · Member retention", "2 · Cross-sport discovery"],
-  },
-  {
-    heading: "New business",
+    heading: "Tier 1 program",
     items: [
-      "3 · Event promoter",
-      "4 · Corporate event hunter",
-      "5 · Member lead finder",
+      "1 · Tier 1 Performance onboarding",
+      "2 · Tier 1 scheduling and family questions",
+      "3 · Tournament reports",
     ],
   },
   {
-    heading: "Capture demand",
-    items: ["6 · Website chatbot", "7 · Email triage"],
+    heading: "Lead generation",
+    items: [
+      "4 · Golf class lead finder",
+      "5 · Gym lead finder (recommend declining)",
+    ],
   },
   {
-    heading: "Manager intel",
-    items: ["8 · Competitor watch"],
+    heading: "Customer ops",
+    items: ["6 · General customer Q&A"],
   },
 ];
 
 type AgentSpec = {
   id: string;
   title: string;
-  tail: string;
+  /** Always-visible summary line shown when the row is collapsed */
+  tail?: string;
+  /** Body paragraphs revealed on expand */
   body: string[];
+  /** Optional ordered list rendered inside the body (used by Agent #5) */
+  reasons?: { title: string; body: string }[];
 };
 
 export const wscAgents: AgentSpec[] = [
   {
     id: "agent-1",
-    title: "1. Member retention",
-    tail: "Connects to CourtReserve and Gmail · Runs daily · ~$3/month",
+    title: "1. Tier 1 Performance onboarding",
+    tail: "Connects to the Tier 1 inbox, CourtReserve, the e-sig tool, and the Fern Console · Runs continuously, business hours and after · ~$5–10/month",
     body: [
-      "Watches check-in and booking data. When a member goes quiet — no visits in three or four weeks — the agent sends a personalized note referencing their sport and what's actually happening at WSC right now (league filling up, a clinic coming, a new demo racket). When it fits, it includes a light offer — free bucket, guest pass, trial lesson — with a one-click path to book.",
+      "Reads every Tier 1 Performance application as it comes in. Looks at the kid's signals — age, UTR, cross-rally rating, tournaments per month, schooling preference — and applies WSC's class-routing rules to pick the right evaluation class. Drafts a welcoming email walking the family through the next steps: which evaluation class to attend, how to make a CourtReserve account, what to expect on the day. Once the family signs up, confirms via CourtReserve and emails the assigned coach with the kid's context. After the evaluation, the coach enters their accept-or-reject decision in the Console with a few notes; the agent picks it up and drafts the right follow-up — congratulations and paperwork links if accepted, a thoughtful explanation and rec class suggestions if not — and tracks paperwork to completion. Replies arrive in 5–15 minutes during business hours and by 9am the next day after hours, with human-feeling timing. Hands off to a person anytime a parent goes off-script or sounds upset.",
     ],
   },
   {
     id: "agent-2",
-    title: "2. Cross-sport discovery (tennis & pickleball)",
-    tail: "Connects to CourtReserve and Gmail · Runs weekly · ~$3/month",
+    title: "2. Tier 1 scheduling and family questions",
+    tail: "Connects to the Tier 1 inbox, CourtReserve, and the Fern Console · Runs continuously · ~$15–25/month",
     body: [
-      "Finds tennis-only and pickleball-only members and nudges them to try the other sport — first lesson free, demo hour with a pro, open court trial. Multi-sport members stay longer and spend more, so this is a retention play dressed as growth. Works both directions: pickleball-first members get a tennis hook, tennis-first members get a pickleball hook.",
+      "Lives on the same Tier 1 inbox and handles every scheduling and ongoing question from enrolled families. For private lessons, looks up the requested coach's published availability against court availability and the kid's history, proposes specific time slots in the reply, and books in CourtReserve once the family confirms — never books unilaterally. For group lessons, applies WSC's eligibility rules and proposes the right options. Handles cancellations, reschedules, and makeups using WSC's stated policy. Answers ongoing questions like \"what time is Tommy's lesson next Tuesday?\" or \"who's coaching the 4pm group?\" — always grounded in CourtReserve data, never invented. Coaches manage their own availability windows in the Console; the agent reads from there. Requires a one-time shift in how coaches schedule privates — from ad-hoc 1-on-1 negotiation to set availability windows. Covered below in *Next Steps & Requirements*.",
     ],
   },
   {
     id: "agent-3",
-    title: "3. Event promoter",
-    tail: "Connects to Gmail and the CourtReserve member list · Runs on demand, plus scheduled follow-ups · $2–5/month",
+    title: "3. Tournament reports",
+    tail: "Connects to public tournament data sources and the Fern Console · Runs on demand · ~$3–7/month",
     body: [
-      "Give it an event — a tournament, ladies' night, junior camp, sim league, holiday mixer — and it figures out which members should hear about it, drafts the email tailored to each group, sends at the right time, and handles the reminders. RSVPs come back to one place. Removes the \"we have this great event but nobody knew about it\" problem.",
+      "On-demand. A coach opens the Console, finds a kid (or types in a name for a non-roster prospect), and clicks Generate Report. The agent pulls from the tournament sources WSC tells it to watch, gathers the kid's recent matches and historical results, compares against peer cohorts (same age, same UTR), and writes a narrative report covering recent results, opponent quality, surface and pace patterns, and concrete observations the data supports. No generic platitudes — only what's in the data. Saved to the kid's Console card; coach can share a read-only link with the parent.",
     ],
   },
   {
     id: "agent-4",
-    title: "4. Corporate event hunter",
-    tail: "Connects to public news sources and Gmail · Runs a weekly scan · $5–10/month",
+    title: "4. Golf class lead finder",
+    tail: "Connects to public tournament sources, parent enrichment tooling, the WSC golf inbox, and the Fern Console · Runs weekly · ~$40–65/month, including a paid email-discovery service",
     body: [
-      "Watches local business signals — Seattle-area funding announcements, executive hires, company milestones, Chamber activity — and flags companies likely to book a team event (corporate golf outing, tennis mixer, sim tournament, end-of-quarter party). Drafts the outreach email for you to review and send. Turns WSC's highest-ticket product line into a proactive pipeline instead of \"whoever happens to find us.\"",
+      "Watches local junior golf tournaments — junior tour events, regional youth tournaments, HS golf, club opens — and surfaces kids who match WSC's \"good fit\" criteria. For each prospect, finds the parent's contact through public sources only: news mentions, public association directories, public-record discovery. No scraping of closed networks. Drafts personalized outreach: who WSC is, where we saw the kid, what we observed (only what's actually in the public record), what we're offering. Every email is reviewed and approved by the head golf person before it sends — no exceptions, no auto-send window, ever. Replies route back into a real conversation with the parent, and the agent drafts follow-ups for approval too. Anyone who asks to be removed is permanently blocklisted within the same business day. Fully CAN-SPAM compliant: clear sender identity, real WSC address, working unsubscribe in every email.",
     ],
   },
   {
     id: "agent-5",
-    title: "5. Member lead finder",
-    tail: "Connects to public community sources, new-mover data, and Gmail · Runs weekly · $6–12/month",
+    title: "5. Gym lead finder — requested, with concerns",
     body: [
-      "Finds prospective new members in the WSC catchment — Woodinville, Kirkland, Bothell, Redmond — by watching local signals: people on Nextdoor or Reddit asking about pickleball, tennis lessons for kids, or golf coaching; public posts on local community and parent pages; Google searches with local intent (\"tennis lessons Woodinville\"); new-mover data; school-year program windows.",
-      "Each week you get a list of prospects, each with a **drafted personal outreach for you to send from your account** — a comment, a DM, an email. The agent researches and writes; a human sends. That's deliberate: automated posting in closed groups (mom groups, neighborhood groups) violates platform rules and burns goodwill. Done right, this is one GM reaching out to one local because the AI spotted a real signal.",
-      "Also drafts targeted Meta/Instagram ad copy — tuned to the mom-and-family demographic in WSC zip codes — for you to approve and run if you want paid reach on top of the organic outreach.",
+      "What was requested: an agent that finds women aged 35–45, family of about 3.5, household income $150k+ in the Woodinville area, gets their email addresses, and sends cold outreach about WSC's gym and gym classes.",
+      "I recommend not building this one. Four reasons:",
+    ],
+    reasons: [
+      {
+        title: "1. The data is hard to get cleanly.",
+        body: "Tight individual-level demographic targeting (age + family size + household income + ZIP) requires expensive paid data brokers. Email match rates against tight profiles run 5–15%. Most of the spend produces no usable contacts.",
+      },
+      {
+        title: "2. The legal posture.",
+        body: "Cold consumer email is allowed under CAN-SPAM with proper compliance, but unlike the golf outreach there's no \"we saw your kid play in a tournament\" hook. Pure cold demographic targeting reads as spam and triggers additional disclosure obligations under state laws (CCPA, MHMDA).",
+      },
+      {
+        title: "3. The conversion math doesn't pay back.",
+        body: "Industry benchmark for cold consumer email is 0.1–0.5% conversion. Out of 1,000 sends you'd expect 1–5 trial signups, of which maybe one becomes a member. Data acquisition + sending + brand cost is greater than the return.",
+      },
+      {
+        title: "4. The brand risk is asymmetric.",
+        body: "WSC is a community brand. One annoyed parent posting \"WSC is sending me emails about joining their gym\" in a local Facebook group damages the brand with the exact demographic you're trying to reach.",
+      },
     ],
   },
   {
     id: "agent-6",
-    title: "6. Website chatbot",
-    tail: "Connects to the WSC website via one line of code · Runs 24/7 · $5–15/month depending on traffic",
+    title: "6. General customer Q&A",
+    tail: "Connects to the general WSC inbox and the Fern Console · Runs continuously · ~$10–18/month",
     body: [
-      "The WSC site doesn't have one today — this adds a small chat widget that answers the questions people currently have to email or call about: hours, membership pricing, how to book a simulator, guest passes, what Toptracer is, lesson availability. Captures contact info from anyone it can't close and passes them to staff with context.",
-    ],
-  },
-  {
-    id: "agent-7",
-    title: "7. Email triage",
-    tail: "Connects to Gmail · Runs every two minutes · $3–8/month",
-    body: [
-      "Reads every email arriving at the main WSC inbox, sorts it (inquiry, complaint, booking, vendor, junk), and drops a draft reply in Gmail drafts for staff to review and send. Urgent items get flagged at the top. Cuts the inbox work from an hour to ten minutes most days.",
-    ],
-  },
-  {
-    id: "agent-8",
-    title: "8. Competitor watch",
-    tail: "Connects to a watchlist of competitor sites and social profiles · Runs weekly · $3–6/month",
-    body: [
-      "Every Monday morning you get a short digest of what other Seattle-area ranges, tennis clubs, pickleball facilities, and gyms are doing — price changes, new promos, events they're running, hours changes, membership tiers, notable social posts. Synthesized into a one-page read, not a data dump. Designed for decisions, not dashboards.",
+      "Lives on info@woodinvillesportsclub.com — the main WSC inbox. Reads every incoming email and routes it: Tier 1 program emails go to the Tier 1 agents above, complaints and off-script questions escalate to a person, and everything else is general Q&A — hours, pricing, class schedules, location, parking, membership tiers, policies. The agent answers from a knowledge base WSC manages in the Fern Console: structured entries for every fact, edited self-serve by staff. The first round of entries is seeded by scraping the public WSC website plus a 2–3 hour session with whoever knows the club best. If a question can't be answered from the knowledge base, the agent escalates rather than guessing. Over time the knowledge base fills out as escalations reveal gaps.",
     ],
   },
 ];
 
-export const wscValueRows = [
+export const wscBuildSequence = [
   {
-    name: "Member retention",
-    math: "1–2 members saved from churn per month = 12–24 memberships retained across the year",
-    impact: "$18K–$36K/yr retained",
+    phase: "Phase 1",
+    items: [
+      "Agent #6 · General Q&A",
+      "Agent #1 · Tier 1 onboarding",
+    ],
   },
   {
-    name: "Member lead finder",
-    math: "2–3 new members per month = 24–36 new memberships in year one",
-    impact: "$20K–$30K yr-1, $70K–$110K LTV",
+    phase: "Phase 2",
+    items: [
+      "Agent #3 · Tournament reports",
+      "Agent #4 · Golf lead finder",
+    ],
   },
   {
-    name: "Corporate event hunter",
-    math: "1 additional corporate booking per month at $2K–$4K each",
-    impact: "$24K–$48K/yr",
-  },
-  {
-    name: "Event promoter",
-    math: "Events filling to 85% instead of 50–60%; ~$500–$1,500 lift per event, 2–4 events/month",
-    impact: "$12K–$48K/yr",
-  },
-  {
-    name: "Website chatbot",
-    math: "1 membership/month recovered from after-hours site traffic that would have bounced",
-    impact: "$18K/yr + staff time",
-  },
-  {
-    name: "Cross-sport discovery",
-    math: "3–5 single-sport members per month deepened into dual-sport; adds $25–$50/month per converted member",
-    impact: "$5K–$15K/yr",
-  },
-  {
-    name: "Email triage",
-    math: "Staff inbox time cut from ~60 min/day to ~10 min/day",
-    impact: "~5 hrs/week freed",
-  },
-  {
-    name: "Competitor watch",
-    math: "Decision support — informs pricing moves, event timing, membership tier adjustments",
-    impact: "Not directly attributable",
+    phase: "Phase 3",
+    items: ["Agent #2 · Scheduling and family questions"],
   },
 ];
