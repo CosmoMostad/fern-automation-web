@@ -41,7 +41,7 @@ function SectionHeader({
   return (
     <div className="grid md:grid-cols-[1.5fr_1fr] gap-8 md:gap-16 items-end">
       <div>
-        <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-fern-500">
+        <p className="text-sm font-medium text-fern-500">
           {label}
         </p>
         <h2 className="mt-3 text-white max-w-[18ch]">{title}</h2>
@@ -166,7 +166,7 @@ function ConsoleMockup() {
           <span className="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]" />
           <span className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
         </div>
-        <div className="text-[10px] font-mono text-white/45 px-3 py-1 rounded-md bg-white/5 border border-white/8">
+        <div className="text-[10px] font-mono text-white/72 px-3 py-1 rounded-md bg-white/5 border border-white/8">
           console.fernautomation.com / your-business
         </div>
         <div className="w-12" />
@@ -190,7 +190,7 @@ function ConsoleMockup() {
           <NavItem label="Settings" />
 
           <div className="mt-8 pt-4 border-t border-white/8">
-            <div className="text-[9px] font-mono uppercase tracking-wider text-white/35 px-2">
+            <div className="text-[9px] font-mono uppercase tracking-wider text-white/70 px-2">
               status
             </div>
             <div className="mt-2 px-2 flex items-center gap-2">
@@ -204,7 +204,7 @@ function ConsoleMockup() {
         <main className="p-5 border-r border-white/8 overflow-hidden">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-[10px] font-mono uppercase tracking-wider text-white/40">
+              <div className="text-[10px] font-mono uppercase tracking-wider text-white/70">
                 Active agents
               </div>
               <div className="text-base font-medium text-white mt-1">
@@ -232,7 +232,7 @@ function ConsoleMockup() {
         {/* activity */}
         <aside className="p-5">
           <div className="flex items-center justify-between">
-            <div className="text-[10px] font-mono uppercase tracking-wider text-white/40">
+            <div className="text-[10px] font-mono uppercase tracking-wider text-white/70">
               Live activity
             </div>
             <span className="w-1.5 h-1.5 rounded-full bg-fern-500 pulse-dot" />
@@ -255,14 +255,14 @@ function ConsoleMockup() {
                   <span className="font-medium text-white text-[11px]">
                     {f.action}
                   </span>
-                  <span className="text-white/40 text-[10px] ml-auto font-mono">
+                  <span className="text-white/70 text-[10px] ml-auto font-mono">
                     {f.timeAgo}
                   </span>
                 </div>
                 <div className="mt-1 text-[11px] text-white/65 leading-snug">
                   {f.detail}
                 </div>
-                <div className="text-[9px] text-white/35 mt-1 font-mono">
+                <div className="text-[9px] text-white/70 mt-1 font-mono">
                   via {f.agent}
                 </div>
               </motion.div>
@@ -278,7 +278,7 @@ function NavItem({ label, active, badge }: { label: string; active?: boolean; ba
   return (
     <div
       className={`flex items-center justify-between px-2 py-1.5 rounded-md text-xs ${
-        active ? "bg-white/8 text-white" : "text-white/55 hover:text-white"
+        active ? "bg-white/8 text-white" : "text-white/80 hover:text-white"
       }`}
     >
       <span>{label}</span>
@@ -328,14 +328,14 @@ function AgentTile({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
-          <span className="text-[10px] font-mono uppercase tracking-wider text-white/55">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-white/80">
             {statusLabel}
           </span>
         </div>
-        <span className="text-[10px] font-mono text-white/35">{a.countLabel}</span>
+        <span className="text-[10px] font-mono text-white/70">{a.countLabel}</span>
       </div>
       <div className="mt-2 text-xs font-medium text-white">{a.name}</div>
-      <div className="mt-1 text-[11px] text-white/55 truncate">{a.last}</div>
+      <div className="mt-1 text-[11px] text-white/80 truncate">{a.last}</div>
       <div className="mt-2 text-base font-mono num-mono text-fern-300">
         {a.countText ?? count.toString()}
       </div>
@@ -356,11 +356,11 @@ function Stat({
 }) {
   return (
     <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
-      <div className="text-[10px] font-mono uppercase tracking-wider text-white/45">
+      <div className="text-[10px] font-mono uppercase tracking-wider text-white/72">
         {label}
       </div>
       <div className="mt-1 text-xl font-medium text-white num-mono">{value}</div>
-      <div className={`mt-0.5 text-[10px] ${positive ? "text-fern-400" : "text-white/55"}`}>
+      <div className={`mt-0.5 text-[10px] ${positive ? "text-fern-400" : "text-white/80"}`}>
         {delta}
       </div>
     </div>
