@@ -1,24 +1,37 @@
 -- Fern Console initial schema
--- Multi-tenant: each business is an org. Users belong to one or more orgs via org_members.
--- All tenant data references org_id and is gated by RLS policies.
+-- Idempotent: safe to re-run. Drops existing fern tables first, then rebuilds.
+-- Multi-tenant: each business is an org. Users belong to orgs via org_members.
+-- All tenant data is gated by RLS policies.
 
 create extension if not exists "pgcrypto";
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- DROP everything we own (in dependency order). Safe on a fresh project.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+drop table if exists public.agent_requests cascade;
+drop table if exists public.events cascade;
+drop table if exists public.agent_runs cascade;
+drop table if exists public.agents cascade;
+drop table if exists public.org_members cascade;
+drop table if exists public.orgs cascade;
+
+drop function if exists public.user_org_ids() cascade;
+drop function if exists public.set_updated_at() cascade;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Tables
 -- ─────────────────────────────────────────────────────────────────────────────
 
--- One per business
 create table public.orgs (
-  id          uuid primary key default gen_random_uuid(),
-  slug        text unique not null check (slug ~ '^[a-z0-9-]+$'),
-  name        text not null,
+  id           uuid primary key default gen_random_uuid(),
+  slug         text unique not null check (slug ~ '^[a-z0-9-]+$'),
+  name         text not null,
   setup_status text not null default 'ready' check (setup_status in ('ready', 'in-setup', 'live')),
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now()
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
 );
 
--- Membership: which auth users belong to which org and in what role
 create table public.org_members (
   id            uuid primary key default gen_random_uuid(),
   org_id        uuid not null references public.orgs(id) on delete cascade,
@@ -32,7 +45,6 @@ create table public.org_members (
 create index org_members_user_id_idx on public.org_members(user_id);
 create index org_members_org_id_idx on public.org_members(org_id);
 
--- Agents: one per automated workflow
 create table public.agents (
   id           uuid primary key default gen_random_uuid(),
   org_id       uuid not null references public.orgs(id) on delete cascade,
@@ -40,7 +52,7 @@ create table public.agents (
   description  text,
   status       text not null default 'scoped' check (status in ('scoped', 'in-build', 'live', 'paused', 'archived')),
   config       jsonb not null default '{}',
-  position     int not null default 0, -- display order
+  position     int not null default 0,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
@@ -48,7 +60,6 @@ create table public.agents (
 create index agents_org_id_idx on public.agents(org_id);
 create index agents_org_status_idx on public.agents(org_id, status);
 
--- Each invocation/run of an agent
 create table public.agent_runs (
   id            uuid primary key default gen_random_uuid(),
   agent_id      uuid not null references public.agents(id) on delete cascade,
@@ -64,7 +75,6 @@ create table public.agent_runs (
 create index agent_runs_agent_id_idx on public.agent_runs(agent_id, started_at desc);
 create index agent_runs_org_id_idx on public.agent_runs(org_id, started_at desc);
 
--- High-level activity feed entries (what shows in the console activity rail)
 create table public.events (
   id          uuid primary key default gen_random_uuid(),
   org_id      uuid not null references public.orgs(id) on delete cascade,
@@ -77,7 +87,6 @@ create table public.events (
 
 create index events_org_id_created_idx on public.events(org_id, created_at desc);
 
--- Requests submitted via the "Request a new agent" modal
 create table public.agent_requests (
   id          uuid primary key default gen_random_uuid(),
   org_id      uuid references public.orgs(id) on delete set null,
@@ -92,6 +101,28 @@ create table public.agent_requests (
 
 create index agent_requests_org_id_idx on public.agent_requests(org_id, created_at desc);
 create index agent_requests_status_idx on public.agent_requests(status);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Grants — required so anon/authenticated roles can hit PostgREST.
+-- RLS is the actual access control; these grants just unlock the door.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+grant usage on schema public to anon, authenticated, service_role;
+
+grant select, insert, update, delete on public.orgs            to anon, authenticated;
+grant select, insert, update, delete on public.org_members     to anon, authenticated;
+grant select, insert, update, delete on public.agents          to anon, authenticated;
+grant select                          on public.agent_runs     to anon, authenticated;
+grant select                          on public.events         to anon, authenticated;
+grant select, insert                  on public.agent_requests to anon, authenticated;
+
+-- service_role bypasses RLS but still needs schema-level grants
+grant all on public.orgs            to service_role;
+grant all on public.org_members     to service_role;
+grant all on public.agents          to service_role;
+grant all on public.agent_runs      to service_role;
+grant all on public.events          to service_role;
+grant all on public.agent_requests  to service_role;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- updated_at triggers
@@ -124,7 +155,6 @@ alter table public.agent_runs enable row level security;
 alter table public.events enable row level security;
 alter table public.agent_requests enable row level security;
 
--- Helper: which orgs does the current user belong to?
 create or replace function public.user_org_ids()
 returns setof uuid
 language sql
@@ -135,7 +165,9 @@ as $$
   select org_id from public.org_members where user_id = auth.uid();
 $$;
 
--- orgs: members of the org can read it; only owners can update
+grant execute on function public.user_org_ids() to anon, authenticated;
+
+-- orgs
 create policy "orgs_select_member"
   on public.orgs for select
   using (id in (select public.user_org_ids()));
@@ -149,7 +181,7 @@ create policy "orgs_update_owner"
     )
   );
 
--- org_members: see your own memberships and members of orgs you belong to
+-- org_members
 create policy "org_members_select_self_or_org"
   on public.org_members for select
   using (
@@ -157,7 +189,7 @@ create policy "org_members_select_self_or_org"
     or org_id in (select public.user_org_ids())
   );
 
-create policy "org_members_insert_owner"
+create policy "org_members_insert_owner_admin"
   on public.org_members for insert
   with check (
     org_id in (
@@ -175,7 +207,7 @@ create policy "org_members_delete_owner"
     )
   );
 
--- agents: visible to org members, modifiable by owners/admins
+-- agents
 create policy "agents_select_member"
   on public.agents for select
   using (org_id in (select public.user_org_ids()));
@@ -195,21 +227,21 @@ create policy "agents_modify_admin"
     )
   );
 
--- agent_runs: read-only for org members. Inserts come from service-role agent runtime.
+-- agent_runs (read-only via REST; runtime inserts use service_role)
 create policy "agent_runs_select_member"
   on public.agent_runs for select
   using (org_id in (select public.user_org_ids()));
 
--- events: read-only for org members. Inserts come from service role.
+-- events (read-only via REST; runtime inserts use service_role)
 create policy "events_select_member"
   on public.events for select
   using (org_id in (select public.user_org_ids()));
 
--- agent_requests: members can submit and read their own org's requests
+-- agent_requests
 create policy "agent_requests_select_member"
   on public.agent_requests for select
   using (
-    org_id is null and user_id = auth.uid()
+    (org_id is null and user_id = auth.uid())
     or org_id in (select public.user_org_ids())
   );
 
