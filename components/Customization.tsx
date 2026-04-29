@@ -22,7 +22,7 @@ export default function Customization() {
       />
       <div className="max-w-page mx-auto relative-z">
         <div className="text-center max-w-3xl mx-auto">
-          <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-fern-500">
+          <p className="text-sm font-medium text-fern-500">
             Customization
           </p>
           <h2 className="mt-3 text-white">
@@ -44,7 +44,7 @@ export default function Customization() {
             className="rounded-2xl border border-white/10 p-7 bg-white/[0.02]"
           >
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-white/45">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-white/72">
                 Off-the-shelf SaaS
               </span>
             </div>

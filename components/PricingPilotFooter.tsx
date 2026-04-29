@@ -93,7 +93,7 @@ function PricingCard({
         <span className="text-3xl font-semibold tracking-tight">{range}</span>
       </div>
       <div
-        className={`mt-1 text-sm ${highlight ? "text-white/55" : "text-muted"}`}
+        className={`mt-1 text-sm ${highlight ? "text-white/80" : "text-muted"}`}
       >
         {unit}
       </div>
@@ -250,10 +250,7 @@ export function ClosingCTA() {
   return (
     <section className="hero-night px-6 md:px-10 py-24 md:py-32 text-white text-center relative overflow-hidden">
       <div className="max-w-2xl mx-auto relative-z">
-        <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-fern-500">
-          Get started
-        </p>
-        <h2 className="mt-4 text-white">
+        <h2 className="text-white">
           The repetitive work doesn&rsquo;t need a person.
         </h2>
         <p className="mt-5 text-white/70 text-base leading-relaxed max-w-[52ch] mx-auto">
@@ -270,9 +267,6 @@ export function ClosingCTA() {
             Or just email me
           </a>
         </div>
-        <p className="mt-6 text-[11px] font-mono uppercase tracking-wider text-white/35">
-          Reply within a day · usually faster
-        </p>
       </div>
     </section>
   );
@@ -284,7 +278,7 @@ export function ClosingCTA() {
 
 export function SiteFooter() {
   return (
-    <footer className="bg-[#06090A] border-t border-white/8 text-white/55 px-6 md:px-10 py-12">
+    <footer className="bg-[#06090A] border-t border-white/8 text-white/80 px-6 md:px-10 py-12">
       <div className="max-w-page mx-auto">
         <div className="grid md:grid-cols-[2fr_1fr_1fr_1fr] gap-10">
           <div>
@@ -295,14 +289,14 @@ export function SiteFooter() {
               </svg>
               <span className="text-white font-medium tracking-tight">fern automation</span>
             </div>
-            <p className="mt-4 text-sm text-white/55 max-w-xs leading-relaxed">
+            <p className="mt-4 text-sm text-white/80 max-w-xs leading-relaxed">
               A one-person company in Seattle. Building small AI agents that
               handle the repetitive work between a small business&rsquo;s
               tools.
             </p>
           </div>
           <div>
-            <div className="text-[10px] font-mono uppercase tracking-wider text-white/35 mb-3">
+            <div className="text-sm font-semibold text-white mb-3">
               Site
             </div>
             <ul className="space-y-2 text-sm">
@@ -313,7 +307,7 @@ export function SiteFooter() {
             </ul>
           </div>
           <div>
-            <div className="text-[10px] font-mono uppercase tracking-wider text-white/35 mb-3">
+            <div className="text-sm font-semibold text-white mb-3">
               Company
             </div>
             <ul className="space-y-2 text-sm">
@@ -322,7 +316,7 @@ export function SiteFooter() {
             </ul>
           </div>
           <div>
-            <div className="text-[10px] font-mono uppercase tracking-wider text-white/35 mb-3">
+            <div className="text-sm font-semibold text-white mb-3">
               Get in touch
             </div>
             <ul className="space-y-2 text-sm">
@@ -345,7 +339,7 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-12 pt-6 border-t border-white/8 flex flex-col md:flex-row md:justify-between gap-3 text-[11px] font-mono text-white/35">
+        <div className="mt-12 pt-6 border-t border-white/8 flex flex-col md:flex-row md:justify-between gap-3 text-sm text-white/70">
           <span>© 2026 Fern Automation · Seattle, WA</span>
           <span>Built in Seattle · Hosted in Oregon</span>
         </div>

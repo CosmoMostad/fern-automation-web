@@ -12,7 +12,7 @@ export default function AgentDemos() {
       <div className="max-w-page mx-auto">
         <div className="grid md:grid-cols-[1.5fr_1fr] gap-8 md:gap-16 items-end">
           <div>
-            <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-fern-700">
+            <p className="text-sm font-medium text-fern-700">
               Agents
             </p>
             <h2 className="mt-3 max-w-[20ch]">
@@ -159,10 +159,10 @@ function EmailResponderDemo() {
               <path d="M1 1.5L5 4.5L9 1.5" stroke="#A8C49A" strokeWidth="0.8" />
             </svg>
           </div>
-          <span className="text-[10px] text-white/55 font-mono truncate">{s.inbox.from}</span>
+          <span className="text-[10px] text-white/80 font-mono truncate">{s.inbox.from}</span>
         </div>
         <div className="mt-1.5 text-[11px] font-medium text-white">{s.inbox.subject}</div>
-        <div className="text-[10px] text-white/55 truncate">{s.inbox.body}</div>
+        <div className="text-[10px] text-white/80 truncate">{s.inbox.body}</div>
       </motion.div>
 
       {/* processing */}
@@ -170,7 +170,7 @@ function EmailResponderDemo() {
         animate={{
           opacity: step >= 1 && step < 3 ? 1 : 0.25,
         }}
-        className="flex items-center gap-2 text-[10px] font-mono text-white/55 px-2"
+        className="flex items-center gap-2 text-[10px] font-mono text-white/80 px-2"
       >
         <span className="flex gap-1">
           <span className={`w-1.5 h-1.5 rounded-full ${step === 1 || step === 2 ? "bg-fern-500" : "bg-white/20"} transition`} />
@@ -192,7 +192,7 @@ function EmailResponderDemo() {
           <span className="text-[10px] font-mono uppercase tracking-wider text-fern-300">
             {s.out.sub}
           </span>
-          <span className="text-[10px] font-mono text-white/45">{s.out.time}</span>
+          <span className="text-[10px] font-mono text-white/72">{s.out.time}</span>
         </div>
         <div className="mt-1 text-[11px] text-white">{s.out.text}</div>
       </motion.div>
@@ -230,7 +230,7 @@ function BookingDemo() {
   return (
     <div className="w-full max-w-[280px]">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] font-mono uppercase tracking-wider text-white/55">
+        <span className="text-[10px] font-mono uppercase tracking-wider text-white/80">
           Apr 28 – May 4
         </span>
         <span className="text-[10px] font-mono text-fern-500">
@@ -239,7 +239,7 @@ function BookingDemo() {
       </div>
       <div className="grid grid-cols-7 gap-1">
         {bookingDays.map((d) => (
-          <div key={d} className="text-center text-[9px] font-mono text-white/45">
+          <div key={d} className="text-center text-[9px] font-mono text-white/72">
             {d}
           </div>
         ))}
@@ -372,7 +372,7 @@ function ReviewDemo() {
         </div>
       </motion.div>
 
-      <div className="flex items-center gap-2 text-[10px] font-mono text-white/55 px-1">
+      <div className="flex items-center gap-2 text-[10px] font-mono text-white/80 px-1">
         <span className="w-1.5 h-1.5 rounded-full bg-fern-500 pulse-dot" />
         <span>fern · drafting in your tone</span>
       </div>

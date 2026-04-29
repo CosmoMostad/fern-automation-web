@@ -33,7 +33,7 @@ export default function HowItWorks() {
       <div className="max-w-page mx-auto">
         <div className="grid md:grid-cols-[1.5fr_1fr] gap-8 md:gap-16 items-end">
           <div>
-            <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-fern-700">
+            <p className="text-sm font-medium text-fern-700">
               How it works
             </p>
             <h2 className="mt-3 max-w-[20ch]">
