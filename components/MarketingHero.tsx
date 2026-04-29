@@ -78,11 +78,11 @@ function AgentFlowDiagram() {
       <div className="px-5 md:px-7 py-4 border-b border-white/8 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-fern-500 pulse-dot" />
-          <span className="text-[11px] font-mono uppercase tracking-wider text-white/55">
+          <span className="text-[11px] font-mono uppercase tracking-wider text-white/80">
             Live · agent in operation
           </span>
         </div>
-        <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-white/40 font-mono">
+        <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-white/70 font-mono">
           fern · live demo
         </div>
       </div>
@@ -99,7 +99,7 @@ function AgentFlowDiagram() {
         <FlowColumn title="Outgoing" align="left" items={outgoing} reverse={true} />
       </div>
 
-      <div className="px-5 md:px-7 py-3 border-t border-white/8 flex items-center justify-between text-[11px] text-white/40 font-mono">
+      <div className="px-5 md:px-7 py-3 border-t border-white/8 flex items-center justify-between text-[11px] text-white/70 font-mono">
         <span>Illustration. Real volumes come from your business.</span>
         <span className="hidden md:inline">~6 / hr · 0 errors</span>
       </div>
@@ -122,7 +122,7 @@ function FernHub() {
       </div>
       <div className="mt-3 text-center">
         <div className="text-xs font-medium text-white">Fern</div>
-        <div className="text-[10px] text-white/45 font-mono uppercase tracking-wider">
+        <div className="text-[10px] text-white/72 font-mono uppercase tracking-wider">
           Reads · Drafts · Acts
         </div>
       </div>
@@ -158,7 +158,7 @@ function FlowColumn({
   return (
     <div className="relative h-full overflow-hidden">
       <div className="absolute top-3 left-0 right-0 px-5 md:px-7 z-10 flex items-center justify-between">
-        <span className="text-[10px] font-mono uppercase tracking-wider text-white/40">
+        <span className="text-[10px] font-mono uppercase tracking-wider text-white/70">
           {title}
         </span>
       </div>
@@ -184,7 +184,7 @@ function FlowTile({ item, align }: { item: FlowItem; align: "left" | "right" }) 
       <div className="bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2.5 max-w-[220px] w-full">
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full" style={{ background: item.color }} />
-          <span className="text-[10px] font-mono uppercase tracking-wider text-white/45">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-white/72">
             {item.kind}
           </span>
         </div>

@@ -54,7 +54,7 @@ export default function Reviews() {
       <div className="max-w-page mx-auto">
         <div className="grid md:grid-cols-[1.5fr_1fr] gap-8 md:gap-16 items-end">
           <div>
-            <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-fern-700">
+            <p className="text-sm font-medium text-fern-700">
               From the people running the businesses
             </p>
             <h2 className="mt-3 max-w-[18ch]">
@@ -91,8 +91,8 @@ export default function Reviews() {
               <Avatar initials={reviews[0].initials} color={reviews[0].color} size={56} />
               <div className="md:text-right">
                 <div className="font-semibold text-white">{reviews[0].name}</div>
-                <div className="text-xs text-white/55">{reviews[0].role}</div>
-                <div className="text-[10px] font-mono text-white/40 mt-0.5">
+                <div className="text-xs text-white/80">{reviews[0].role}</div>
+                <div className="text-[10px] font-mono text-white/70 mt-0.5">
                   {reviews[0].location}
                 </div>
               </div>
