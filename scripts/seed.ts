@@ -39,6 +39,10 @@ const DEMO_ORG_SLUG = "demo-sports-club";
 const DEMO_ORG_NAME = "Demo Sports Club";
 const DEMO_USER_EMAIL = "demo@fernautomation.com";
 
+// `config.type` is the bridge between the runtime (Hetzner agent code in
+// `agents/<type>/`) and the UI (display name shown in the Console).
+// Without it, the agent runtime can't look up its agent_id at startup —
+// the lookup_agent helper in shared/console_db.py joins on it.
 const DEMO_AGENTS = [
   {
     name: "Intake & booking",
@@ -46,36 +50,46 @@ const DEMO_AGENTS = [
       "Handles incoming SMS booking requests, finds open slots, confirms.",
     status: "live" as const,
     position: 0,
+    config: { type: "intake_booking" },
   },
   {
     name: "No-show prevention",
     description: "Confirms tomorrow's bookings, reschedules if needed.",
     status: "in-build" as const,
     position: 1,
+    config: { type: "no_show_prevention" },
   },
   {
     name: "Feedback collection",
     description: "Sends short post-visit survey, summarizes themes weekly.",
     status: "scoped" as const,
     position: 2,
+    config: { type: "feedback_collection" },
   },
+  // The two below have real agent code on Hetzner — running them will
+  // actually write rows back to Supabase via shared/console_db.py.
   {
-    name: "Member outreach",
-    description: "Re-engages members who haven't visited in 30+ days.",
-    status: "scoped" as const,
+    name: "Competitor watch",
+    description:
+      "Weekly scan of competitor websites for pricing, events, and openings; emails a recap to the owner.",
+    status: "live" as const,
     position: 3,
+    config: { type: "competitor_watch" },
   },
   {
-    name: "Internal staff Slack",
-    description: "Routes urgent messages to the right staff member.",
-    status: "scoped" as const,
+    name: "Corporate event hunter",
+    description:
+      "Weekly scan of local business news for companies that might book private events; drafts cold outreach for approval.",
+    status: "in-build" as const,
     position: 4,
+    config: { type: "corporate_event_hunter" },
   },
   {
     name: "Weekly owner report",
     description: "Monday morning email with the numbers from the week.",
     status: "scoped" as const,
     position: 5,
+    config: { type: "weekly_owner_report" },
   },
 ];
 
