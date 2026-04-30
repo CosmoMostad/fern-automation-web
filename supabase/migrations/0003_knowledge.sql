@@ -26,11 +26,12 @@ create table public.knowledge_docs (
   updated_at  timestamptz not null default now(),
 
   -- Scope sanity: org-level docs have null agent_id; agent-level docs require agent_id.
-  constraint knowledge_docs_scope_check
-    check (
-      (scope = 'org'   and agent_id is null) or
-      (scope = 'agent' and agent_id is not null)
-    )
+  -- Anonymous constraint (Postgres auto-names) so re-runs of this migration
+  -- never collide with a stale name from a partial earlier run.
+  check (
+    (scope = 'org'   and agent_id is null) or
+    (scope = 'agent' and agent_id is not null)
+  )
 );
 
 create index knowledge_docs_org_id_idx     on public.knowledge_docs(org_id, scope, position);
