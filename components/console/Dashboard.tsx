@@ -394,12 +394,15 @@ function AgentCard({ a }: { a: Agent }) {
       : a.status === "archived"
       ? "Archived"
       : "Scoped";
-  return (
+
+  // Demo agents have hardcoded ids that don't exist in the DB; don't link them.
+  const isDemo = a.id.startsWith("demo-") || a.id.startsWith("wsc-");
+  const inner = (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="rounded-xl border border-white/10 bg-white/[0.025] hover:bg-white/[0.04] transition p-5 cursor-pointer"
+      className="rounded-xl border border-white/10 bg-white/[0.025] hover:bg-white/[0.04] transition p-5 cursor-pointer h-full"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -427,6 +430,14 @@ function AgentCard({ a }: { a: Agent }) {
         </div>
       )}
     </motion.div>
+  );
+
+  if (isDemo) return inner;
+
+  return (
+    <Link href={`/console/agents/${a.id}`} className="plain block">
+      {inner}
+    </Link>
   );
 }
 

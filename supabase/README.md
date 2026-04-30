@@ -27,6 +27,12 @@ This directory holds SQL migrations for the Fern Console database.
 | `agent_runs` | each invocation/run of an agent |
 | `events` | high-level activity feed (what shows in the console activity rail) |
 | `agent_requests` | submissions from the "Request a new agent" modal |
+| `threads` | conversation grouping — one per back-and-forth thread with a contact |
+| `messages` | every email/sms/voice exchange, both directions, with full body and llm i/o |
+| `escalations` | items bumped to a human, with claim/resolve flow |
+| `knowledge_docs` | per-org base layer + per-agent fact buckets that get rendered into prompts |
+| `knowledge_doc_versions` | append-only edit history, snapshotted by trigger on every doc update |
+| `knowledge_examples` | few-shot email examples (always agent-scoped, toggleable active flag) |
 
 All tenant tables have RLS enabled. A helper function `public.user_org_ids()` returns the set of orgs the current user belongs to. Policies join against that set so users only see their org's data.
 
@@ -34,4 +40,14 @@ The `service_role` key bypasses RLS and is what the agent runtime (on Hetzner) u
 
 ## Adding new migrations
 
-Drop a new numbered file in `migrations/`, e.g. `0002_add_voice_profile.sql`. Run it manually in the Supabase SQL Editor. (We can wire up the Supabase CLI later if we want automated migrations.)
+Drop a new numbered file in `migrations/`, e.g. `0004_something.sql`. Run it manually in the Supabase SQL Editor. (We can wire up the Supabase CLI later if we want automated migrations.)
+
+## Apply pending migrations
+
+In order, paste each into Supabase Studio → SQL Editor → Run:
+
+1. `migrations/0001_initial_schema.sql` — orgs, members, agents, runs, events, requests
+2. `migrations/0002_messages_threads_escalations.sql` — live activity layer
+3. `migrations/0003_knowledge.sql` — knowledge docs, versions, few-shot examples
+
+All three are idempotent — re-running them drops and rebuilds their tables. Do NOT run 0002 and 0003 against a database with real production data without first backing up: they `drop table cascade` to keep iteration painless.
