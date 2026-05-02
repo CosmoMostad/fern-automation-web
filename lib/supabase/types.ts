@@ -16,6 +16,17 @@ export type SetupStatus = "ready" | "in-setup" | "live";
 
 export type OrgRole = "owner" | "admin" | "staff" | "viewer";
 
+export type OrgInvite = {
+  id: string;
+  org_id: string;
+  email: string;
+  role: OrgRole;
+  invited_by: string | null;
+  accepted_at: string | null;
+  accepted_by: string | null;
+  created_at: string;
+};
+
 export type AgentRunStatus =
   | "pending"
   | "running"
@@ -51,6 +62,7 @@ export type Agent = {
   description: string | null;
   status: AgentStatus;
   config: Record<string, unknown>;
+  trust_mode: "manual" | "assisted" | "autonomous";
   position: number;
   created_at: string;
   updated_at: string;
@@ -238,4 +250,116 @@ export type AgentDetailData = {
   org_knowledge: KnowledgeDoc[];
   agent_knowledge: KnowledgeDoc[];
   examples: KnowledgeExample[];
+  // Optional, populated only when the agent type calls for it.
+  // Keeps tabs pre-rendered without per-tab data fetches.
+  students?: Student[];
+  prospects?: Array<{
+    id: string;
+    org_id: string;
+    agent_id: string | null;
+    full_name: string;
+    age: number | null;
+    age_band: string | null;
+    location: string | null;
+    signal_type: string;
+    signal_summary: string;
+    signal_detail: Record<string, unknown>;
+    source_name: string;
+    source_url: string | null;
+    icp_score: number | null;
+    icp_reasoning: string | null;
+    contact_email: string | null;
+    contact_name: string | null;
+    contact_relation: string | null;
+    contact_confidence: number | null;
+    status: string;
+    created_at: string;
+    agent_name: string | null;
+    agent_type: string | null;
+    draft_subject: string | null;
+    draft_body: string | null;
+    draft_message_id: string | null;
+  }>;
+};
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Marketplace + Students + Reports (migration 0005)
+ * ──────────────────────────────────────────────────────────────────── */
+
+export type TrustMode = "manual" | "assisted" | "autonomous";
+
+export type AgentTypeCategory =
+  | "customer_ops"
+  | "lead_generation"
+  | "analytics"
+  | "workflow";
+
+export type AgentTypeTrigger = "cron" | "inbound" | "on_demand";
+
+export type AgentType = {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  category: AgentTypeCategory;
+  trigger_kind: AgentTypeTrigger;
+  default_config: Record<string, unknown>;
+  icon: string | null;
+  is_published: boolean;
+  position: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StudentStatus =
+  | "prospect"
+  | "evaluating"
+  | "active"
+  | "alumni"
+  | "inactive";
+
+export type Student = {
+  id: string;
+  org_id: string;
+  full_name: string;
+  preferred_name: string | null;
+  age: number | null;
+  birthdate: string | null;
+  location: string | null;
+  sport: string | null;
+  current_rating: number | null;
+  current_rating_label: string | null;
+  parent_email: string | null;
+  parent_name: string | null;
+  metadata: Record<string, unknown>;
+  status: StudentStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StudentReportType =
+  | "tournament"
+  | "progress"
+  | "evaluation"
+  | "other";
+
+export type StudentReport = {
+  id: string;
+  org_id: string;
+  agent_id: string | null;
+  student_id: string | null;
+  student_name_snapshot: string;
+  report_type: StudentReportType;
+  body_markdown: string;
+  source_data: Record<string, unknown>;
+  share_slug: string | null;
+  generated_at: string;
+  created_at: string;
+};
+
+/** AgentType + per-org install info, for the marketplace browse view. */
+export type MarketplaceAgentType = AgentType & {
+  installed_agent_id: string | null;
+  installed_status: AgentStatus | null;
 };

@@ -37,6 +37,7 @@ export const wscDemo: DashboardData = {
       description:
         "Handles incoming SMS booking requests, finds open slots, confirms.",
       status: "in-build",
+      trust_mode: "manual",
       config: {},
       position: 0,
       created_at: new Date().toISOString(),
@@ -49,6 +50,7 @@ export const wscDemo: DashboardData = {
       description:
         "Confirms tomorrow's bookings, reschedules if needed.",
       status: "in-build",
+      trust_mode: "manual",
       config: {},
       position: 1,
       created_at: new Date().toISOString(),
@@ -61,6 +63,7 @@ export const wscDemo: DashboardData = {
       description:
         "Sends short post-visit survey, summarizes themes weekly.",
       status: "scoped",
+      trust_mode: "manual",
       config: {},
       position: 2,
       created_at: new Date().toISOString(),
@@ -72,6 +75,7 @@ export const wscDemo: DashboardData = {
       name: "Member outreach",
       description: "Re-engages members who haven't visited in 30+ days.",
       status: "scoped",
+      trust_mode: "manual",
       config: {},
       position: 3,
       created_at: new Date().toISOString(),
@@ -83,6 +87,7 @@ export const wscDemo: DashboardData = {
       name: "Internal staff Slack",
       description: "Routes urgent messages to the right staff member.",
       status: "scoped",
+      trust_mode: "manual",
       config: {},
       position: 4,
       created_at: new Date().toISOString(),
@@ -95,6 +100,7 @@ export const wscDemo: DashboardData = {
       description:
         "Monday morning email with the numbers from the week.",
       status: "scoped",
+      trust_mode: "manual",
       config: {},
       position: 5,
       created_at: new Date().toISOString(),

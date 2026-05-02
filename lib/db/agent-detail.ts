@@ -18,6 +18,7 @@ import type {
   KnowledgeExample,
   KnowledgeDocVersion,
   Org,
+  Student,
 } from "@/lib/supabase/types";
 
 export type AgentDetailResult =
@@ -40,7 +41,7 @@ export async function getAgentDetail(
   const { data: agent } = await supabase
     .from("agents")
     .select(
-      "id, org_id, name, description, status, config, position, created_at, updated_at"
+      "id, org_id, name, description, status, config, trust_mode, position, created_at, updated_at"
     )
     .eq("id", agentId)
     .maybeSingle();
@@ -117,6 +118,110 @@ export async function getAgentDetail(
     user.email?.split("@")[0] ??
     "there";
 
+  // Agent-type-specific extras: pull data the per-agent tabs need so the
+  // page renders without an extra round-trip when a tab opens.
+  const agentType =
+    typeof (agent.config as Record<string, unknown>)?.type === "string"
+      ? ((agent.config as Record<string, unknown>).type as string)
+      : null;
+
+  let students: Student[] | undefined;
+  let prospects: AgentDetailData["prospects"] | undefined;
+
+  if (agentType === "tournament_reports") {
+    const { data: studentRows } = await supabase
+      .from("students")
+      .select("*")
+      .eq("org_id", orgId)
+      .order("full_name", { ascending: true })
+      .limit(200);
+    students = (studentRows as Student[] | null) ?? [];
+  }
+
+  if (agentType === "golf_lead_finder" || agentType === "signal_hunter") {
+    const { data: prospectRows } = await supabase
+      .from("prospects")
+      .select("*")
+      .eq("org_id", orgId)
+      .eq("agent_id", agentId)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    const baseRows = (prospectRows ?? []) as Array<Record<string, unknown>>;
+
+    // Attach the latest drafted message per prospect (for the inline draft preview)
+    const prospectIds = baseRows.map((r) => r.id as string);
+    const draftByProspect = new Map<
+      string,
+      { messageId: string; subject: string | null; body: string | null }
+    >();
+    if (prospectIds.length > 0) {
+      const { data: outreaches } = await supabase
+        .from("prospect_outreach")
+        .select("prospect_id, message_id, created_at")
+        .in("prospect_id", prospectIds)
+        .not("message_id", "is", null)
+        .order("created_at", { ascending: false });
+      const seen = new Set<string>();
+      const linkPid = new Map<string, string>();
+      const messageIds: string[] = [];
+      for (const o of outreaches ?? []) {
+        const pid = o.prospect_id as string;
+        const mid = o.message_id as string | null;
+        if (!mid || seen.has(pid)) continue;
+        seen.add(pid);
+        messageIds.push(mid);
+        linkPid.set(mid, pid);
+      }
+      if (messageIds.length > 0) {
+        const { data: msgs } = await supabase
+          .from("messages")
+          .select("id, subject, body")
+          .in("id", messageIds);
+        for (const m of msgs ?? []) {
+          const pid = linkPid.get(m.id as string);
+          if (pid) {
+            draftByProspect.set(pid, {
+              messageId: m.id as string,
+              subject: (m.subject as string | null) ?? null,
+              body: (m.body as string | null) ?? null,
+            });
+          }
+        }
+      }
+    }
+
+    prospects = baseRows.map((r) => {
+      const draft = draftByProspect.get(r.id as string);
+      return {
+        id: r.id as string,
+        org_id: r.org_id as string,
+        agent_id: (r.agent_id as string | null) ?? null,
+        full_name: r.full_name as string,
+        age: (r.age as number | null) ?? null,
+        age_band: (r.age_band as string | null) ?? null,
+        location: (r.location as string | null) ?? null,
+        signal_type: r.signal_type as string,
+        signal_summary: r.signal_summary as string,
+        signal_detail: (r.signal_detail as Record<string, unknown>) ?? {},
+        source_name: r.source_name as string,
+        source_url: (r.source_url as string | null) ?? null,
+        icp_score: (r.icp_score as number | null) ?? null,
+        icp_reasoning: (r.icp_reasoning as string | null) ?? null,
+        contact_email: (r.contact_email as string | null) ?? null,
+        contact_name: (r.contact_name as string | null) ?? null,
+        contact_relation: (r.contact_relation as string | null) ?? null,
+        contact_confidence: (r.contact_confidence as number | null) ?? null,
+        status: r.status as string,
+        created_at: r.created_at as string,
+        agent_name: (agent as Agent).name,
+        agent_type: agentType,
+        draft_message_id: draft?.messageId ?? null,
+        draft_subject: draft?.subject ?? null,
+        draft_body: draft?.body ?? null,
+      };
+    });
+  }
+
   return {
     ok: true,
     data: {
@@ -129,6 +234,8 @@ export async function getAgentDetail(
       org_knowledge: (orgKnowledgeRes.data ?? []) as KnowledgeDoc[],
       agent_knowledge: (agentKnowledgeRes.data ?? []) as KnowledgeDoc[],
       examples: (examplesRes.data ?? []) as KnowledgeExample[],
+      students,
+      prospects,
     },
   };
 }

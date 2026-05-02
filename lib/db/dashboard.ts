@@ -39,13 +39,37 @@ export async function getDashboardData(opts: {
 
   // Pick the first org the user is a member of.
   // Multi-org switching can come later via a header dropdown.
-  const { data: membership } = await supabase
+  let { data: membership } = await supabase
     .from("org_members")
     .select("org_id, display_name, role")
     .eq("user_id", user.id)
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
+
+  // Auto-onboarding: if the signed-in user has no membership but there's a
+  // pending invite for their email, attach them now so they land directly in
+  // the inviting org instead of an empty fallback.
+  if (!membership) {
+    try {
+      const { claimPendingInvitesForCurrentUser } = await import(
+        "@/app/console/settings/business/actions"
+      );
+      const r = await claimPendingInvitesForCurrentUser();
+      if (r.attached > 0) {
+        const { data: m } = await supabase
+          .from("org_members")
+          .select("org_id, display_name, role")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        membership = m;
+      }
+    } catch {
+      // Non-fatal — fall through to the empty-state path below.
+    }
+  }
 
   if (!membership) {
     // Authed user with no org yet — show the empty demo with their email-based name.
@@ -72,7 +96,7 @@ export async function getDashboardData(opts: {
   const { data: agents } = await supabase
     .from("agents")
     .select(
-      "id, org_id, name, description, status, config, position, created_at, updated_at"
+      "id, org_id, name, description, status, config, trust_mode, position, created_at, updated_at"
     )
     .eq("org_id", org.id)
     .order("position", { ascending: true });

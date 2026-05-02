@@ -1,17 +1,31 @@
 /**
- * Loader for /console/inbox — cross-agent message view, all of the org's
- * recent inbound and outbound traffic in one stream.
+ * Loader for /console/inbox — unified cross-agent view of:
+ *   • Messages: all inbound + outbound traffic, every status
+ *   • Escalations: items each agent bumped to a human (open + resolved)
+ *
+ * Escalations were previously a separate route; folded in here so there's
+ * one queue to manage instead of two.
  */
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-import type { Agent, Message, Org } from "@/lib/supabase/types";
+import type { Agent, Escalation, Message, Org } from "@/lib/supabase/types";
+
+export type EscalationWithLinks = Escalation & {
+  message: Pick<
+    Message,
+    "id" | "subject" | "body_preview" | "from_addr" | "direction" | "created_at"
+  > | null;
+  agent: Pick<Agent, "id" | "name"> | null;
+};
 
 export type InboxData = {
   org: Pick<Org, "id" | "slug" | "name" | "setup_status">;
   user: { id: string; display_name: string };
   agents: Pick<Agent, "id" | "name" | "status">[];
   messages: Message[];
+  escalations_open: EscalationWithLinks[];
+  escalations_resolved: EscalationWithLinks[];
 };
 
 export type InboxResult =
@@ -38,24 +52,43 @@ export async function getInbox(): Promise<InboxResult> {
 
   const orgId = membership.org_id as string;
 
-  const [orgRes, agentsRes, msgsRes] = await Promise.all([
-    supabase
-      .from("orgs")
-      .select("id, slug, name, setup_status")
-      .eq("id", orgId)
-      .single(),
-    supabase
-      .from("agents")
-      .select("id, name, status")
-      .eq("org_id", orgId)
-      .order("position", { ascending: true }),
-    supabase
-      .from("messages")
-      .select("*")
-      .eq("org_id", orgId)
-      .order("created_at", { ascending: false })
-      .limit(100),
-  ]);
+  const [orgRes, agentsRes, msgsRes, openEscRes, resolvedEscRes] =
+    await Promise.all([
+      supabase
+        .from("orgs")
+        .select("id, slug, name, setup_status")
+        .eq("id", orgId)
+        .single(),
+      supabase
+        .from("agents")
+        .select("id, name, status")
+        .eq("org_id", orgId)
+        .order("position", { ascending: true }),
+      supabase
+        .from("messages")
+        .select("*")
+        .eq("org_id", orgId)
+        .order("created_at", { ascending: false })
+        .limit(100),
+      supabase
+        .from("escalations")
+        .select(
+          "*, message:messages(id, subject, body_preview, from_addr, direction, created_at), agent:agents(id, name)"
+        )
+        .eq("org_id", orgId)
+        .in("status", ["open", "claimed"])
+        .order("created_at", { ascending: false })
+        .limit(50),
+      supabase
+        .from("escalations")
+        .select(
+          "*, message:messages(id, subject, body_preview, from_addr, direction, created_at), agent:agents(id, name)"
+        )
+        .eq("org_id", orgId)
+        .in("status", ["resolved", "dismissed"])
+        .order("resolved_at", { ascending: false })
+        .limit(20),
+    ]);
 
   const orgRow = orgRes.data as Pick<Org, "id" | "slug" | "name" | "setup_status"> | null;
   if (!orgRow) return { ok: false, reason: "no-org" };
@@ -74,6 +107,9 @@ export async function getInbox(): Promise<InboxResult> {
       },
       agents: (agentsRes.data ?? []) as Pick<Agent, "id" | "name" | "status">[],
       messages: (msgsRes.data ?? []) as Message[],
+      escalations_open: (openEscRes.data ?? []) as EscalationWithLinks[],
+      escalations_resolved:
+        (resolvedEscRes.data ?? []) as EscalationWithLinks[],
     },
   };
 }

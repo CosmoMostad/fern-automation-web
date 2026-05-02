@@ -4,13 +4,19 @@ import { useState, useTransition } from "react";
 
 import { Sidebar, TopBar } from "@/components/console/Shell";
 import {
+  cancelTeamInvite,
   createOrgKnowledgeDoc,
-  updateOrgKnowledgeDoc,
   deleteOrgKnowledgeDoc,
+  inviteTeamMember,
+  removeTeamMember,
+  updateOrgKnowledgeDoc,
   updateOrgName,
 } from "@/app/console/settings/business/actions";
-import type { BusinessSettingsData } from "@/lib/db/business-settings";
-import type { KnowledgeDoc } from "@/lib/supabase/types";
+import type {
+  BusinessSettingsData,
+  MemberRow,
+} from "@/lib/db/business-settings";
+import type { KnowledgeDoc, OrgInvite } from "@/lib/supabase/types";
 
 const SUGGESTED_DOCS = [
   {
@@ -33,7 +39,7 @@ const SUGGESTED_DOCS = [
 
 export default function BusinessSettings({ data }: { data: BusinessSettingsData }) {
   return (
-    <div className="grid grid-cols-[210px_1fr] min-h-screen">
+    <div className="console-shell grid grid-cols-[220px_1fr] min-h-screen bg-[#0A1310] text-white">
       <Sidebar isDemo={false} />
       <div className="grid grid-rows-[56px_1fr] min-w-0">
         <TopBar
@@ -47,7 +53,7 @@ export default function BusinessSettings({ data }: { data: BusinessSettingsData 
             <h1 className="text-2xl font-semibold text-white tracking-tight">
               Business profile
             </h1>
-            <p className="mt-1 text-sm text-white/65">
+            <p className="mt-1 text-sm text-white/75">
               Facts every agent in {data.org.name} reads before drafting any reply.
               Anyone on the team can edit. Edit history is kept automatically.
             </p>
@@ -58,7 +64,7 @@ export default function BusinessSettings({ data }: { data: BusinessSettingsData 
           </section>
 
           <section className="mb-8">
-            <h2 className="text-sm font-semibold text-white mb-3">Knowledge documents</h2>
+            <h2 className="text-base font-semibold text-white mb-3">Knowledge documents</h2>
             {data.org_knowledge.length === 0 ? (
               <SuggestedStarters orgId={data.org.id} />
             ) : (
@@ -72,29 +78,263 @@ export default function BusinessSettings({ data }: { data: BusinessSettingsData 
           </section>
 
           <section>
-            <h2 className="text-sm font-semibold text-white mb-3">Team</h2>
-            <div className="rounded-lg border border-white/10 bg-white/[0.02] divide-y divide-white/5">
-              {data.members.map((m) => (
-                <div
-                  key={m.id}
-                  className="px-4 py-3 flex items-center justify-between text-sm"
-                >
-                  <span className="text-white">
-                    {m.display_name ?? <span className="text-white/45">Unnamed teammate</span>}
-                  </span>
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-white/55">
-                    {m.role}
-                  </span>
-                </div>
-              ))}
+            <div className="flex items-baseline justify-between mb-3">
+              <h2 className="text-base font-semibold text-white">Team</h2>
+              <span className="text-xs text-white/65">
+                {data.members.length}{" "}
+                {data.members.length === 1 ? "member" : "members"}
+                {data.pending_invites.length > 0
+                  ? ` · ${data.pending_invites.length} pending`
+                  : ""}
+              </span>
             </div>
-            <p className="mt-3 text-xs text-white/45">
-              Member-invite UI coming next. For now, new teammates get added by
-              signing in to the Console with the same magic-link flow you used.
-            </p>
+
+            <TeamList
+              orgId={data.org.id}
+              members={data.members}
+              pendingInvites={data.pending_invites}
+              currentUserId={data.user.id}
+            />
+
+            <InviteForm orgId={data.org.id} />
           </section>
         </main>
       </div>
+    </div>
+  );
+}
+
+/* ───────────── TEAM ───────────── */
+
+function TeamList({
+  orgId,
+  members,
+  pendingInvites,
+  currentUserId,
+}: {
+  orgId: string;
+  members: MemberRow[];
+  pendingInvites: OrgInvite[];
+  currentUserId: string;
+}) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.02] divide-y divide-white/8">
+      {members.map((m) => (
+        <MemberRowView
+          key={m.id}
+          member={m}
+          isCurrent={m.user_id === currentUserId}
+        />
+      ))}
+      {pendingInvites.map((inv) => (
+        <InviteRowView key={inv.id} invite={inv} />
+      ))}
+      {members.length === 0 && pendingInvites.length === 0 && (
+        <div className="px-4 py-6 text-sm text-white/65 text-center">
+          No team members yet.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MemberRowView({
+  member: m,
+  isCurrent,
+}: {
+  member: MemberRow;
+  isCurrent: boolean;
+}) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function remove() {
+    if (
+      !confirm(
+        `Remove ${m.display_name ?? m.email ?? "this member"} from the org? They'll lose access immediately.`
+      )
+    )
+      return;
+    setError(null);
+    startTransition(async () => {
+      const r = await removeTeamMember({ memberId: m.id });
+      if (!r.ok) setError(r.error);
+    });
+  }
+
+  return (
+    <div className="px-4 py-3 flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-medium text-white">
+            {m.display_name ??
+              m.email?.split("@")[0] ??
+              "Unnamed teammate"}
+          </span>
+          {isCurrent && (
+            <span className="text-[10px] font-medium text-fern-300">
+              you
+            </span>
+          )}
+        </div>
+        {m.email && (
+          <div className="text-xs text-white/65 truncate">{m.email}</div>
+        )}
+      </div>
+      <div className="flex items-center gap-3 shrink-0">
+        <span className="text-xs font-medium text-white/75 capitalize">
+          {m.role}
+        </span>
+        {!isCurrent && (
+          <button
+            onClick={remove}
+            disabled={pending}
+            className="text-xs text-red-400 hover:text-red-300 disabled:opacity-50"
+          >
+            {pending ? "Removing…" : "Remove"}
+          </button>
+        )}
+        {error && <span className="text-xs text-red-400">{error}</span>}
+      </div>
+    </div>
+  );
+}
+
+function InviteRowView({ invite }: { invite: OrgInvite }) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function cancel() {
+    if (!confirm(`Cancel invite to ${invite.email}?`)) return;
+    setError(null);
+    startTransition(async () => {
+      const r = await cancelTeamInvite({ inviteId: invite.id });
+      if (!r.ok) setError(r.error);
+    });
+  }
+
+  return (
+    <div className="px-4 py-3 flex items-center justify-between gap-3 bg-amber-500/[0.04]">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-medium text-white">{invite.email}</span>
+          <span className="text-[10px] font-medium text-amber-300 bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 rounded">
+            Invite sent
+          </span>
+        </div>
+        <div className="text-xs text-white/65">
+          They&rsquo;ll join automatically on first sign-in.
+        </div>
+      </div>
+      <div className="flex items-center gap-3 shrink-0">
+        <span className="text-xs font-medium text-white/75 capitalize">
+          {invite.role}
+        </span>
+        <button
+          onClick={cancel}
+          disabled={pending}
+          className="text-xs text-white/65 hover:text-white disabled:opacity-50"
+        >
+          {pending ? "Canceling…" : "Cancel"}
+        </button>
+        {error && <span className="text-xs text-red-400">{error}</span>}
+      </div>
+    </div>
+  );
+}
+
+function InviteForm({ orgId }: { orgId: string }) {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<"owner" | "admin" | "staff" | "viewer">(
+    "staff"
+  );
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+
+  function submit() {
+    setError(null);
+    setSent(false);
+    startTransition(async () => {
+      const r = await inviteTeamMember({ orgId, email, role });
+      if (!r.ok) setError(r.error);
+      else {
+        setEmail("");
+        setSent(true);
+        setOpen(false);
+      }
+    });
+  }
+
+  if (!open) {
+    return (
+      <div className="mt-3 flex items-center justify-between">
+        <button
+          onClick={() => setOpen(true)}
+          className="text-sm text-fern-300 hover:text-white font-medium"
+        >
+          + Invite teammate
+        </button>
+        {sent && (
+          <span className="text-xs text-fern-300">Invite sent.</span>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 rounded-lg border border-white/15 bg-white/[0.025] p-4">
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_140px_auto] gap-2 items-end">
+        <label className="block">
+          <div className="text-xs font-medium text-white mb-1">Email</div>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="teammate@yourbusiness.com"
+            autoFocus
+            className="w-full bg-black/40 border border-white/15 rounded-md px-3 py-2 text-sm text-white placeholder:text-white/35 focus:border-fern-500 outline-none"
+          />
+        </label>
+        <label className="block">
+          <div className="text-xs font-medium text-white mb-1">Role</div>
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value as typeof role)}
+            className="w-full bg-black/40 border border-white/15 rounded-md px-3 py-2 text-sm text-white focus:border-fern-500 outline-none"
+          >
+            <option value="owner">Owner</option>
+            <option value="admin">Admin</option>
+            <option value="staff">Staff</option>
+            <option value="viewer">Viewer</option>
+          </select>
+        </label>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={submit}
+            disabled={pending || !email.trim()}
+            className="text-sm bg-fern-700 hover:bg-fern-600 disabled:opacity-40 text-white font-medium px-3 py-2 rounded-md transition"
+          >
+            {pending ? "Sending…" : "Send invite"}
+          </button>
+          <button
+            onClick={() => {
+              setOpen(false);
+              setError(null);
+            }}
+            className="text-xs text-white/65 hover:text-white px-2 py-2"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+      {error && <div className="mt-2 text-xs text-red-400">{error}</div>}
+      <p className="mt-3 text-xs text-white/65">
+        We&rsquo;ll email a sign-in code to this address. They click, enter it,
+        and land in {""}
+        <span className="text-white">your console</span> with the role you set.
+      </p>
     </div>
   );
 }

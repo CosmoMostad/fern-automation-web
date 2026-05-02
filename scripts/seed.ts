@@ -43,53 +43,54 @@ const DEMO_USER_EMAIL = "demo@fernautomation.com";
 // `agents/<type>/`) and the UI (display name shown in the Console).
 // Without it, the agent runtime can't look up its agent_id at startup —
 // the lookup_agent helper in shared/console_db.py joins on it.
+// `config.type` is the join key — must match an entry in agent_types.key
+// AND a folder name under `agents/` in the Hetzner runtime. That's what
+// activates each agent's tailored workspace tab in the Console.
 const DEMO_AGENTS = [
   {
-    name: "Intake & booking",
+    name: "Customer Q&A",
     description:
-      "Handles incoming SMS booking requests, finds open slots, confirms.",
+      "Watches the general support inbox, classifies each message, and drafts a grounded reply from the knowledge bucket.",
     status: "live" as const,
     position: 0,
-    config: { type: "intake_booking" },
+    config: { type: "customer_qa", approval_required: true },
+    trust_mode: "manual" as const,
   },
   {
-    name: "No-show prevention",
-    description: "Confirms tomorrow's bookings, reschedules if needed.",
-    status: "in-build" as const,
+    name: "Tournament Reports",
+    description:
+      "On-demand player report generator. Search a kid, click Generate, get a synthesized narrative report from public match data.",
+    status: "live" as const,
     position: 1,
-    config: { type: "no_show_prevention" },
+    config: { type: "tournament_reports" },
+    trust_mode: "manual" as const,
   },
   {
-    name: "Feedback collection",
-    description: "Sends short post-visit survey, summarizes themes weekly.",
-    status: "scoped" as const,
+    name: "Golf Lead Finder",
+    description:
+      "Weekly scan of public junior-golf sources for kids matching our good-fit criteria; drafts personalized outreach to parents.",
+    status: "in-build" as const,
     position: 2,
-    config: { type: "feedback_collection" },
+    config: { type: "golf_lead_finder", approval_required: true },
+    trust_mode: "manual" as const,
   },
-  // The two below have real agent code on Hetzner — running them will
-  // actually write rows back to Supabase via shared/console_db.py.
   {
-    name: "Competitor watch",
+    name: "Competitor Watch",
     description:
       "Weekly scan of competitor websites for pricing, events, and openings; emails a recap to the owner.",
     status: "live" as const,
     position: 3,
     config: { type: "competitor_watch" },
+    trust_mode: "assisted" as const,
   },
   {
-    name: "Corporate event hunter",
+    name: "Corporate Event Hunter",
     description:
       "Weekly scan of local business news for companies that might book private events; drafts cold outreach for approval.",
     status: "in-build" as const,
     position: 4,
-    config: { type: "corporate_event_hunter" },
-  },
-  {
-    name: "Weekly owner report",
-    description: "Monday morning email with the numbers from the week.",
-    status: "scoped" as const,
-    position: 5,
-    config: { type: "weekly_owner_report" },
+    config: { type: "corporate_event_hunter", approval_required: true },
+    trust_mode: "manual" as const,
   },
 ];
 
@@ -372,8 +373,11 @@ async function main() {
   if (agentErr || !agentsInserted) throw new Error(`agents: ${agentErr?.message}`);
   console.log(`  agents: ${agentsInserted.length} inserted`);
 
-  const intakeAgent = agentsInserted.find((a) => a.name === "Intake & booking");
-  if (!intakeAgent) throw new Error("intake agent missing after insert");
+  // The Customer Q&A agent receives the org's example FAQ knowledge +
+  // example email pairs + the demo threads/messages. (Same role the old
+  // "Intake & booking" agent had; renamed to match the type registry.)
+  const intakeAgent = agentsInserted.find((a) => a.name === "Customer Q&A");
+  if (!intakeAgent) throw new Error("Customer Q&A agent missing after insert");
 
   // 5. Org-level knowledge
   await supabase.from("knowledge_docs").delete().eq("org_id", org.id);

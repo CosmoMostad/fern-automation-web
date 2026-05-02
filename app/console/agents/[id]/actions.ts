@@ -201,6 +201,8 @@ export async function updateAgentSettings(input: {
   name?: string;
   description?: string;
   status?: "scoped" | "in-build" | "live" | "paused" | "archived";
+  trust_mode?: "manual" | "assisted" | "autonomous";
+  approval_required?: boolean;
 }): Promise<ActionResult> {
   const ctx = await withAuth();
   if (ctx.kind === "err") return { ok: false, error: ctx.error };
@@ -212,6 +214,19 @@ export async function updateAgentSettings(input: {
   }
   if (input.description !== undefined) patch.description = input.description.trim() || null;
   if (input.status !== undefined) patch.status = input.status;
+  if (input.trust_mode !== undefined) patch.trust_mode = input.trust_mode;
+
+  // approval_required lives inside the JSONB config — merge it into the existing
+  // config so we don't blow away other keys.
+  if (input.approval_required !== undefined) {
+    const { data: agent } = await ctx.supabase
+      .from("agents")
+      .select("config")
+      .eq("id", input.agentId)
+      .maybeSingle();
+    const existingConfig = (agent?.config ?? {}) as Record<string, unknown>;
+    patch.config = { ...existingConfig, approval_required: input.approval_required };
+  }
 
   const { error } = await ctx.supabase
     .from("agents")
@@ -222,6 +237,74 @@ export async function updateAgentSettings(input: {
   revalidatePath(`/console/agents/${input.agentId}`);
   revalidatePath(`/console`);
   return { ok: true };
+}
+
+/* ───────────── AGENT CONFIG (deep-path edit) ───────────── */
+
+export async function updateAgentConfig(input: {
+  agentId: string;
+  /** Dotted path inside agent.config — e.g. "gmail.account" */
+  path: string;
+  value: unknown;
+}): Promise<ActionResult> {
+  const ctx = await withAuth();
+  if (ctx.kind === "err") return { ok: false, error: ctx.error };
+
+  if (!input.path.trim()) return { ok: false, error: "Path is required." };
+
+  const { data: agent } = await ctx.supabase
+    .from("agents")
+    .select("config")
+    .eq("id", input.agentId)
+    .maybeSingle();
+  if (!agent) return { ok: false, error: "Agent not found." };
+
+  const next = setPath(
+    JSON.parse(JSON.stringify(agent.config ?? {})) as Record<string, unknown>,
+    input.path,
+    input.value
+  );
+
+  const { error } = await ctx.supabase
+    .from("agents")
+    .update({ config: next })
+    .eq("id", input.agentId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/console/agents/${input.agentId}`);
+  revalidatePath(`/console`);
+  return { ok: true };
+}
+
+function setPath(
+  obj: Record<string, unknown>,
+  path: string,
+  value: unknown
+): Record<string, unknown> {
+  const parts = path.split(".");
+  let cur = obj;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const k = parts[i];
+    const existing = cur[k];
+    if (existing && typeof existing === "object" && !Array.isArray(existing)) {
+      cur = existing as Record<string, unknown>;
+    } else {
+      const fresh: Record<string, unknown> = {};
+      cur[k] = fresh;
+      cur = fresh;
+    }
+  }
+  // Empty values clear the leaf so re-saving doesn't keep stale state.
+  if (
+    value === "" ||
+    value === null ||
+    (Array.isArray(value) && value.length === 0)
+  ) {
+    delete cur[parts[parts.length - 1]];
+  } else {
+    cur[parts[parts.length - 1]] = value;
+  }
+  return obj;
 }
 
 /* ───────────── MESSAGE APPROVALS ───────────── */

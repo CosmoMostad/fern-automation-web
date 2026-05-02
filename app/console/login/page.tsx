@@ -11,7 +11,7 @@ export default function LoginPage({
   searchParams: { error?: string; sent?: string };
 }) {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="console-shell min-h-screen flex flex-col bg-[#0A1310] text-white">
       <header className="px-6 md:px-10 py-5 border-b border-white/8">
         <Link
           href="/"

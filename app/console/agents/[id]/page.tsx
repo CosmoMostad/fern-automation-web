@@ -26,9 +26,21 @@ export default async function AgentDetailPage({
     );
   }
 
-  const tab =
-    (searchParams.tab as "timeline" | "knowledge" | "examples" | "settings") ??
-    "timeline";
+  // No default — let AgentDetailShell pick the right landing tab for
+  // the agent type (its workspace tab if it has one, else timeline).
+  const tab = (searchParams.tab ?? null) as
+    | "timeline"
+    | "students"
+    | "prospects"
+    | "applicants"
+    | "conversations"
+    | "competitors"
+    | "leads"
+    | "knowledge"
+    | "examples"
+    | "connections"
+    | "settings"
+    | null;
 
   return <AgentDetailShell data={result.data} initialTab={tab} />;
 }

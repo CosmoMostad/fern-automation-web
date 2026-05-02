@@ -14,22 +14,17 @@ import type { ReactNode } from "react";
 
 /* ───────────── SIDEBAR ───────────── */
 
-type NavSlug =
-  | "agents"
-  | "activity"
-  | "inbox"
-  | "escalations"
-  | "voice"
-  | "reports"
-  | "settings";
+type NavSlug = "agents" | "inbox" | "catalog" | "settings";
 
+// Universal navigation — same across every business. Tight on purpose:
+// agent-specific views (Students, Prospects, Applicants, Competitors,
+// etc.) live as TABS inside the per-agent detail page, not as top-level
+// sidebar items. Escalations live as a tab inside Inbox. Catalog is
+// browse-only — adding agents requires contacting Fern.
 const NAV: { slug: NavSlug; label: string; href: string; icon: ReactNode }[] = [
-  { slug: "agents", label: "Agents", href: "/console", icon: <IconAgents /> },
-  { slug: "activity", label: "Activity", href: "/console/activity", icon: <IconActivity /> },
-  { slug: "inbox", label: "Inbox", href: "/console/inbox", icon: <IconInbox /> },
-  { slug: "escalations", label: "Escalations", href: "/console/escalations", icon: <IconEscalations /> },
-  { slug: "voice", label: "Voice", href: "/console/voice", icon: <IconVoice /> },
-  { slug: "reports", label: "Reports", href: "/console/reports", icon: <IconReports /> },
+  { slug: "agents",  label: "Agents",  href: "/console",         icon: <IconAgents /> },
+  { slug: "inbox",   label: "Inbox",   href: "/console/inbox",   icon: <IconInbox /> },
+  { slug: "catalog", label: "Catalog", href: "/console/catalog", icon: <IconCatalog /> },
 ];
 
 export function Sidebar({ isDemo }: { isDemo: boolean }) {
@@ -281,6 +276,44 @@ export function IconSettings() {
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke={stroke} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="7" cy="7" r="2" />
       <path d="M7 1v2M7 11v2M1 7h2M11 7h2M2.8 2.8l1.4 1.4M9.8 9.8l1.4 1.4M2.8 11.2l1.4-1.4M9.8 4.2l1.4-1.4" />
+    </svg>
+  );
+}
+
+export function IconMarketplace() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke={stroke} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 4h10l-1 7H3L2 4z" />
+      <path d="M5 4V2.5h4V4" />
+      <path d="M5 8h4" />
+    </svg>
+  );
+}
+
+export function IconStudents() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke={stroke} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="7" cy="5" r="2.2" />
+      <path d="M2 12c0-2.5 2.2-4 5-4s5 1.5 5 4" />
+    </svg>
+  );
+}
+
+export function IconCatalog() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke={stroke} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="10" height="10" rx="1.5" />
+      <path d="M2 5h10M5 2v10" />
+    </svg>
+  );
+}
+
+export function IconProspects() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke={stroke} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="7" cy="7" r="5" />
+      <circle cx="7" cy="7" r="2" />
+      <path d="M7 1v1M7 12v1M1 7h1M12 7h1" />
     </svg>
   );
 }
