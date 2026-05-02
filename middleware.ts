@@ -39,14 +39,10 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all paths except:
-     * - api
-     * - _next/static
-     * - _next/image
-     * - favicon and other static files
-     * - the marketing site (we only run middleware on /console)
-     */
+    // Bare /console — `:path*` alone doesn't reliably match the index
+    // route depending on the Next.js version, so list it explicitly.
+    "/console",
+    // Everything under /console.
     "/console/:path*",
   ],
 };
