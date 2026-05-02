@@ -1,6 +1,9 @@
 "use server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  createSupabaseServerClient,
+  createSupabaseServiceRoleClient,
+} from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export type CreateStudentResult =
@@ -55,19 +58,15 @@ export async function createStudent(input: {
 }
 
 export type GenerateReportResult =
-  | { ok: true; reportId: string }
+  | { ok: true; requestId: string }
   | { ok: false; error: string };
 
 /**
- * Stub the report-generation handoff to Hetzner.
- *
- * Real flow: insert a row into agent_requests (or a dedicated trigger
- * table) that the Hetzner runtime polls; once the agent finishes, the
- * student_reports row is written via service-role REST and shows up
- * in the UI.
- *
- * For now: insert a placeholder student_reports row so the UI flow can
- * be tested end-to-end. The real Hetzner agent overwrites this when run.
+ * Trigger the tournament_reports agent for a student. Inserts an
+ * agent_run_requests row and returns the request id so the UI can poll
+ * for completion. The Hetzner run_requests daemon picks it up within
+ * ~15 seconds, runs the agent, and writes a student_reports row plus
+ * marks the request 'done'.
  */
 export async function generateTournamentReport(
   studentId: string
@@ -85,46 +84,52 @@ export async function generateTournamentReport(
     .limit(1)
     .maybeSingle();
   if (!membership) return { ok: false, error: "No org membership." };
+  const orgId = membership.org_id as string;
 
+  // Verify the student belongs to this org (RLS would block anyway, but a
+  // clear early error is friendlier than a confusing one later).
   const { data: student } = await supabase
     .from("students")
-    .select("id, full_name, age, location")
+    .select("id, full_name")
     .eq("id", studentId)
-    .eq("org_id", membership.org_id)
+    .eq("org_id", orgId)
     .maybeSingle();
   if (!student) return { ok: false, error: "Student not found." };
 
-  // Placeholder body — Hetzner agent run will replace this with the
-  // real synthesized report (same row, same id).
-  const placeholder = `# ${student.full_name} — Tournament Report
+  // Find the tournament_reports agent for this org. Without one, there's
+  // nothing to dispatch to.
+  const { data: agents } = await supabase
+    .from("agents")
+    .select("id, config")
+    .eq("org_id", orgId);
+  const reportAgent = (agents ?? []).find(
+    (a) =>
+      typeof (a.config as Record<string, unknown>)?.type === "string" &&
+      (a.config as Record<string, unknown>).type === "tournament_reports"
+  );
+  if (!reportAgent) {
+    return {
+      ok: false,
+      error: "Tournament Reports agent isn't installed for this org.",
+    };
+  }
 
-*Generated ${new Date().toISOString().slice(0, 10)} — placeholder while the Hetzner agent runs.*
-
-The tournament_reports agent will overwrite this body once it finishes pulling source data and synthesizing the report.
-
-To trigger the real run from your Mac:
-
-\`\`\`
-.venv/bin/python -m agents.tournament_reports.agent --client wsc --student-id ${student.id}
-\`\`\`
-`;
-
-  const { data, error } = await supabase
-    .from("student_reports")
+  const admin = createSupabaseServiceRoleClient();
+  const { data: req, error } = await admin
+    .from("agent_run_requests")
     .insert({
-      org_id: membership.org_id,
-      student_id: studentId,
-      student_name_snapshot: student.full_name,
-      report_type: "tournament",
-      body_markdown: placeholder,
-      source_data: {},
+      org_id: orgId,
+      agent_id: reportAgent.id,
+      requested_by: user.id,
+      input_payload: { student_id: studentId },
+      status: "pending",
     })
     .select("id")
     .single();
-  if (error || !data) {
-    return { ok: false, error: error?.message ?? "Insert failed." };
+  if (error || !req) {
+    return { ok: false, error: error?.message ?? "Couldn't queue the report." };
   }
 
   revalidatePath(`/console/students/${studentId}`);
-  return { ok: true, reportId: data.id as string };
+  return { ok: true, requestId: req.id as string };
 }

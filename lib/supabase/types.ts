@@ -363,3 +363,29 @@ export type MarketplaceAgentType = AgentType & {
   installed_agent_id: string | null;
   installed_status: AgentStatus | null;
 };
+
+/* ──────────────────────────────────────────────────────────────────────
+ * On-demand run requests (migration 0007)
+ * ──────────────────────────────────────────────────────────────────── */
+
+export type AgentRunRequestStatus =
+  | "pending"
+  | "running"
+  | "done"
+  | "failed"
+  | "cancelled";
+
+export type AgentRunRequest = {
+  id: string;
+  org_id: string;
+  agent_id: string;
+  requested_by: string | null;
+  input_payload: Record<string, unknown>;
+  status: AgentRunRequestStatus;
+  output_payload: Record<string, unknown> | null;
+  error: string | null;
+  queued_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  claimed_by: string | null;
+};
