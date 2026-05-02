@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "tsx scripts/seed.ts",
-    "seed:marketplace": "tsx scripts/seed-marketplace.ts"
+    "seed:marketplace": "tsx scripts/seed-marketplace.ts",
+    "seed:demo-content": "tsx scripts/seed-demo-content.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",
@@ -16,7 +17,8 @@
     "framer-motion": "^12.38.0",
     "next": "14.2.18",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
     "@types/node": "^20",

@@ -1,20 +1,29 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import {
   createStudent,
   generateTournamentReport,
 } from "@/app/console/students/actions";
-import type { AgentDetailData, Student } from "@/lib/supabase/types";
+import { useAgentRunStatus } from "@/lib/use-agent-run-status";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import type {
+  AgentDetailData,
+  Student,
+  StudentReport,
+} from "@/lib/supabase/types";
+import StudentReportCharts from "@/components/console/StudentReportCharts";
+import StudentReportRenderer from "@/components/console/StudentReportRenderer";
 
 /**
  * Students tab — for tournament_reports agents.
  *
- * Native (no embedding the standalone /console/students page). Two-pane
- * layout: searchable list on the left, detail + report viewer on the right.
- * "Generate report" kicks off a placeholder; the Hetzner agent run
- * overwrites it with the real synthesis.
+ * Native, two-pane: searchable list left, profile + report viewer right.
+ * "Generate report" enqueues an agent_run_requests row; the Hetzner
+ * dispatcher picks it up, runs the agent, writes a student_reports row,
+ * marks the request done. The UI polls the request id and surfaces
+ * status: queued → running → ready (or failed).
  */
 export default function StudentsTab({ data }: { data: AgentDetailData }) {
   const all = (data.students ?? []) as Student[];
@@ -27,7 +36,6 @@ export default function StudentsTab({ data }: { data: AgentDetailData }) {
         s.full_name.toLowerCase().includes(query.trim().toLowerCase())
       )
     : all;
-
   const open = filtered.find((s) => s.id === openId) ?? filtered[0] ?? null;
 
   return (
@@ -61,7 +69,7 @@ export default function StudentsTab({ data }: { data: AgentDetailData }) {
               placeholder="Search by name…"
               className="w-full bg-black/40 border border-white/15 rounded-md px-3 py-2 text-sm text-white placeholder:text-white/35 focus:border-fern-500 outline-none mb-3"
             />
-            <div className="space-y-1.5 max-h-[70vh] overflow-y-auto pr-1">
+            <div className="space-y-1.5 max-h-[78vh] overflow-y-auto pr-1">
               {filtered.map((s) => (
                 <StudentRow
                   key={s.id}
@@ -97,7 +105,7 @@ function EmptyState() {
         No students yet.
       </div>
       <p className="mt-2 text-sm text-white/75 max-w-md mx-auto">
-        Add a student to generate a report. Or once your roster lands here
+        Add a student to generate a report. Or once your roster is wired in
         from CourtReserve / your CRM, they appear automatically.
       </p>
     </div>
@@ -153,104 +161,193 @@ function StudentRow({
 function StudentDetailPanel({ student: s }: { student: Student }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [generated, setGenerated] = useState(false);
+  const [requestId, setRequestId] = useState<string | null>(null);
+  const [reports, setReports] = useState<StudentReport[]>([]);
+  const [loadingReports, setLoadingReports] = useState(true);
+  const [openReportId, setOpenReportId] = useState<string | null>(null);
+
+  // Initial + post-generation report load
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoadingReports(true);
+      const supabase = createSupabaseBrowserClient();
+      const { data } = await supabase
+        .from("student_reports")
+        .select("*")
+        .eq("student_id", s.id)
+        .order("generated_at", { ascending: false })
+        .limit(20);
+      if (cancelled) return;
+      const list = (data as StudentReport[]) ?? [];
+      setReports(list);
+      setOpenReportId((cur) => cur ?? list[0]?.id ?? null);
+      setLoadingReports(false);
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [s.id]);
+
+  const { status, request, elapsedMs } = useAgentRunStatus(requestId, {
+    onDone: async () => {
+      // Re-fetch reports — the agent just wrote a new student_reports row.
+      const supabase = createSupabaseBrowserClient();
+      const { data } = await supabase
+        .from("student_reports")
+        .select("*")
+        .eq("student_id", s.id)
+        .order("generated_at", { ascending: false })
+        .limit(20);
+      const list = (data as StudentReport[]) ?? [];
+      setReports(list);
+      if (list.length > 0) setOpenReportId(list[0].id);
+    },
+  });
 
   function generate() {
     setError(null);
-    setGenerated(false);
     startTransition(async () => {
       const r = await generateTournamentReport(s.id);
       if (!r.ok) setError(r.error);
-      else setGenerated(true);
+      else setRequestId(r.requestId);
     });
   }
 
-  return (
-    <div className="border border-white/10 rounded-xl bg-[#0E1A14] p-6 space-y-5">
-      <header className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h3 className="text-xl font-semibold text-white">{s.full_name}</h3>
-          <div className="mt-1 text-sm text-white/75">
-            {[
-              s.age != null ? `Age ${s.age}` : null,
-              s.location,
-              s.sport,
-            ]
-              .filter(Boolean)
-              .join(" · ") || "—"}
-          </div>
-          {s.current_rating !== null && (
-            <div className="mt-3 inline-flex items-center gap-2 bg-fern-700/15 border border-fern-700/30 px-3 py-1.5 rounded-md">
-              <span className="text-xs font-semibold text-fern-300">
-                {s.current_rating_label ?? "Rating"}
-              </span>
-              <span className="text-base font-bold text-white">
-                {s.current_rating}
-              </span>
-            </div>
-          )}
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <button
-            onClick={generate}
-            disabled={pending}
-            className="text-sm bg-fern-700 hover:bg-fern-600 disabled:opacity-40 text-white font-medium px-4 py-2 rounded-md transition"
-          >
-            {pending ? "Generating…" : "Generate tournament report"}
-          </button>
-          {generated && (
-            <span className="text-xs text-fern-300">
-              Report queued. Check Timeline.
-            </span>
-          )}
-          {error && <span className="text-xs text-red-400">{error}</span>}
-        </div>
-      </header>
+  const isRunning = status === "pending" || status === "running";
+  const openReport = reports.find((r) => r.id === openReportId) ?? null;
 
-      {(s.parent_name || s.parent_email) && (
-        <div className="border-t border-white/10 pt-4">
-          <div className="text-xs font-semibold text-white/85 mb-2">
-            Parent / guardian
+  return (
+    <div className="space-y-5">
+      {/* Header card */}
+      <div className="border border-white/10 rounded-xl bg-[#0E1A14] p-6">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h3 className="text-xl font-semibold text-white">{s.full_name}</h3>
+            <div className="mt-1 text-sm text-white/75">
+              {[
+                s.age != null ? `Age ${s.age}` : null,
+                s.location,
+                s.sport,
+              ]
+                .filter(Boolean)
+                .join(" · ") || "—"}
+            </div>
+            {s.current_rating !== null && (
+              <div className="mt-3 inline-flex items-center gap-2 bg-fern-700/15 border border-fern-700/30 px-3 py-1.5 rounded-md">
+                <span className="text-xs font-semibold text-fern-300">
+                  {s.current_rating_label ?? "Rating"}
+                </span>
+                <span className="text-base font-bold text-white">
+                  {s.current_rating}
+                </span>
+              </div>
+            )}
           </div>
-          <div className="text-sm text-white">
-            {s.parent_name && <span>{s.parent_name}</span>}
+          <div className="flex flex-col items-end gap-2">
+            <button
+              onClick={generate}
+              disabled={pending || isRunning}
+              className="text-sm bg-fern-700 hover:bg-fern-600 disabled:opacity-50 text-white font-medium px-4 py-2 rounded-md transition"
+            >
+              {pending
+                ? "Queueing…"
+                : isRunning
+                ? `${status === "pending" ? "Queued" : "Running"}… ${formatElapsed(elapsedMs)}`
+                : "Generate tournament report"}
+            </button>
+            {status === "failed" && request?.error && (
+              <span className="text-xs text-red-400 max-w-xs text-right">
+                Run failed: {request.error.split("\n")[0]}
+              </span>
+            )}
+            {error && <span className="text-xs text-red-400">{error}</span>}
+          </div>
+        </div>
+
+        {(s.parent_name || s.parent_email) && (
+          <div className="mt-5 pt-4 border-t border-white/8 text-sm text-white/75">
+            <span className="text-white/55 mr-2">Parent / guardian:</span>
+            {s.parent_name && <span className="text-white">{s.parent_name}</span>}
             {s.parent_name && s.parent_email && (
-              <span className="text-white/55"> · </span>
+              <span className="text-white/45"> · </span>
             )}
             {s.parent_email && (
               <span className="text-white/85">{s.parent_email}</span>
             )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {Object.keys(s.metadata ?? {}).length > 0 && (
-        <div className="border-t border-white/10 pt-4">
-          <div className="text-xs font-semibold text-white/85 mb-2">
-            Notes
+      {/* Reports section */}
+      <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-5">
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-white">Reports</h3>
+            <span className="text-xs text-white/55">{reports.length}</span>
           </div>
-          <dl className="text-sm space-y-1">
-            {Object.entries(s.metadata).map(([k, v]) => (
-              <div key={k} className="flex gap-2">
-                <dt className="text-white/65 capitalize">
-                  {k.replace(/_/g, " ")}:
-                </dt>
-                <dd className="text-white/85">{String(v)}</dd>
-              </div>
-            ))}
-          </dl>
+          {loadingReports ? (
+            <p className="text-xs text-white/55 px-2 py-3">Loading…</p>
+          ) : reports.length === 0 ? (
+            <div className="text-sm text-white/65 border border-dashed border-white/15 rounded-md p-3">
+              No reports yet. Click <em className="text-white">Generate</em>{" "}
+              above.
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              {reports.map((r) => {
+                const active = r.id === openReportId;
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => setOpenReportId(r.id)}
+                    className={`w-full text-left px-3 py-2 rounded-md border text-sm transition ${
+                      active
+                        ? "bg-white/[0.06] border-white/25 text-white"
+                        : "bg-white/[0.02] border-white/10 text-white/75 hover:text-white hover:border-white/20"
+                    }`}
+                  >
+                    <div className="capitalize">{r.report_type} report</div>
+                    <div className="mt-0.5 text-[11px] text-white/55">
+                      {new Date(r.generated_at).toLocaleString()}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
 
-      <div className="border-t border-white/10 pt-4">
-        <p className="text-sm text-white/65">
-          Generated reports show up here once the agent runs. The Timeline
-          tab shows every report this agent has produced for any player.
-        </p>
+        <div>
+          {openReport ? (
+            <div className="border border-white/10 rounded-xl bg-[#0E1A14] p-6 space-y-6">
+              <StudentReportCharts sourceData={openReport.source_data} />
+              <StudentReportRenderer markdown={openReport.body_markdown} />
+            </div>
+          ) : (
+            <div className="border border-dashed border-white/10 rounded-xl p-12 text-center text-sm text-white/60">
+              {reports.length > 0
+                ? "Select a report on the left."
+                : "Generate a report to see it here."}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
+
+function formatElapsed(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  const r = s - m * 60;
+  return `${m}m ${r}s`;
+}
+
+/* ───────────── Add student form ───────────── */
 
 function AddStudentForm({ onCreated }: { onCreated: () => void }) {
   const [pending, startTransition] = useTransition();

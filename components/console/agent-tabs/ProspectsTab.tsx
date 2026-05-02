@@ -7,6 +7,8 @@ import {
   editProspectDraft,
   passProspect,
 } from "@/app/console/prospects/actions";
+import { enqueueAgentRun } from "@/app/console/agents/[id]/run-actions";
+import { useAgentRunStatus } from "@/lib/use-agent-run-status";
 import type { AgentDetailData } from "@/lib/supabase/types";
 
 type Status =
@@ -37,6 +39,9 @@ export default function ProspectsTab({ data }: { data: AgentDetailData }) {
   const all = (data.prospects ?? []) as NonNullable<AgentDetailData["prospects"]>;
   const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
   const [openId, setOpenId] = useState<string | null>(all[0]?.id ?? null);
+  const [runReqId, setRunReqId] = useState<string | null>(null);
+  const [runError, setRunError] = useState<string | null>(null);
+  const [runPending, startRunTransition] = useTransition();
 
   const filtered = useMemo(
     () =>
@@ -47,7 +52,6 @@ export default function ProspectsTab({ data }: { data: AgentDetailData }) {
   );
   const open = filtered.find((p) => p.id === openId) ?? filtered[0] ?? null;
 
-  // Counts per status for the tab badges
   const counts = useMemo(() => {
     const c = new Map<string, number>();
     c.set("all", all.length);
@@ -55,14 +59,55 @@ export default function ProspectsTab({ data }: { data: AgentDetailData }) {
     return c;
   }, [all]);
 
+  const { status: runStatus, request: runRequest, elapsedMs } = useAgentRunStatus(runReqId, {
+    onDone: () => {
+      // Trigger a refresh so the new prospects show up. Server data is reloaded
+      // by Next.js when `revalidatePath` was called inside the agent action.
+      if (typeof window !== "undefined") window.location.reload();
+    },
+  });
+  const isRunning = runStatus === "pending" || runStatus === "running";
+
+  function runNow() {
+    setRunError(null);
+    startRunTransition(async () => {
+      const r = await enqueueAgentRun({ agentId: data.agent.id });
+      if (!r.ok) setRunError(r.error);
+      else setRunReqId(r.requestId);
+    });
+  }
+
   return (
     <div className="space-y-6">
-      <header>
-        <h2 className="text-lg font-semibold text-white">Prospects</h2>
-        <p className="mt-1 text-sm text-white/75">
-          Leads this agent has surfaced. Every drafted email waits here for
-          your review — approve to send, edit to refine, pass to skip.
-        </p>
+      <header className="flex items-end justify-between gap-3 flex-wrap">
+        <div>
+          <h2 className="text-lg font-semibold text-white">Prospects</h2>
+          <p className="mt-1 text-sm text-white/75">
+            Leads this agent has surfaced. Every drafted email waits here for
+            your review — approve to send, edit to refine, pass to skip.
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <button
+            onClick={runNow}
+            disabled={runPending || isRunning}
+            className="text-sm bg-fern-700 hover:bg-fern-600 disabled:opacity-50 text-white font-medium px-4 py-2 rounded-md transition"
+          >
+            {runPending
+              ? "Queueing…"
+              : isRunning
+              ? `${runStatus === "pending" ? "Queued" : "Running"}… ${formatElapsed(elapsedMs)}`
+              : "Run agent now"}
+          </button>
+          {runStatus === "failed" && runRequest?.error && (
+            <span className="text-xs text-red-400 max-w-xs text-right">
+              Run failed: {runRequest.error.split("\n")[0]}
+            </span>
+          )}
+          {runError && (
+            <span className="text-xs text-red-400">{runError}</span>
+          )}
+        </div>
       </header>
 
       <div className="flex gap-1 border-b border-white/10 pb-px overflow-x-auto">
@@ -433,4 +478,12 @@ function timeAgo(iso: string): string {
   if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
   if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
   return `${Math.floor(sec / 86400)}d ago`;
+}
+
+function formatElapsed(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  return `${m}m ${s - m * 60}s`;
 }
