@@ -16,6 +16,8 @@ import ApplicantsTab from "@/components/console/agent-tabs/ApplicantsTab";
 import CompetitorsTab from "@/components/console/agent-tabs/CompetitorsTab";
 import LeadsTab from "@/components/console/agent-tabs/LeadsTab";
 import ConnectionsTab from "@/components/console/agent-tabs/ConnectionsTab";
+import RunAgentButton from "@/components/console/RunAgentButton";
+import { getManifest } from "@/lib/agents/manifest";
 
 import type { AgentDetailData } from "@/lib/supabase/types";
 
@@ -198,6 +200,16 @@ export default function AgentDetailShell({
                 />
               </div>
             </motion.div>
+
+            {getManifest(agentType) && (
+              <div className="mt-6">
+                <RunAgentButton
+                  agentId={data.agent.id}
+                  agentStatus={data.agent.status}
+                  agentTypeLabel={getManifest(agentType)?.label}
+                />
+              </div>
+            )}
 
             <nav className="mt-6 flex gap-1">
               {TABS.map((t) => {

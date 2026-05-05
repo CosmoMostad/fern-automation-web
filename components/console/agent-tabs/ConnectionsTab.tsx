@@ -3,6 +3,11 @@
 import { useState, useTransition } from "react";
 
 import { updateAgentConfig } from "@/app/console/agents/[id]/actions";
+import { getManifest } from "@/lib/agents/manifest";
+import type {
+  ConnectionField,
+  ConnectionSection,
+} from "@/lib/agents/manifest";
 import type { AgentDetailData } from "@/lib/supabase/types";
 
 /**
@@ -10,223 +15,27 @@ import type { AgentDetailData } from "@/lib/supabase/types";
  * self-serve their integrations without messaging Fern: Gmail OAuth,
  * API keys, source URL lists, etc.
  *
- * Fields are driven by CONNECTION_SPEC_BY_TYPE so each agent type
- * shows only the connections it actually needs. Same agent type
- * across different businesses gets the same fields — interface is
- * locked to the agent.
+ * Sections are driven by the agent's manifest (lib/agents/manifest.ts)
+ * so each agent type shows only the connections it actually needs.
+ * Same agent type across different businesses gets the same fields —
+ * interface is locked to the agent.
  */
 
-type FieldKind = "oauth_gmail" | "secret" | "text" | "url_list";
-
-type ConnectionField = {
-  /** key inside agent.config (dotted path supported, e.g. "gmail.account") */
-  path: string;
-  label: string;
-  kind: FieldKind;
-  help?: string;
-  placeholder?: string;
-};
-
-type ConnectionSection = {
-  title: string;
-  description?: string;
-  fields: ConnectionField[];
-};
-
-const CONNECTION_SPEC_BY_TYPE: Record<string, ConnectionSection[]> = {
-  customer_qa: [
-    {
-      title: "Gmail",
-      description:
-        "Inbox the agent watches and the address it replies from.",
-      fields: [
-        { path: "gmail.account", label: "Inbox address", kind: "oauth_gmail",
-          help: "Authorize Fern to read this inbox and create drafts." },
-        { path: "gmail.reply_to", label: "Reply-to override", kind: "text",
-          placeholder: "Leave empty to reply from the inbox above",
-          help: "Optional. If set, replies use this address." },
-      ],
-    },
-    {
-      title: "Polling",
-      fields: [
-        { path: "poll_query", label: "Gmail search query", kind: "text",
-          placeholder: "is:unread newer_than:1d",
-          help: "Standard Gmail search syntax. Restricts which messages the agent picks up." },
-        { path: "max_per_run", label: "Max messages per run", kind: "text",
-          placeholder: "20" },
-      ],
-    },
-  ],
-  enrollment_funnel: [
-    {
-      title: "Gmail",
-      description: "Program inbox the agent watches.",
-      fields: [
-        { path: "gmail.account", label: "Inbox address", kind: "oauth_gmail" },
-      ],
-    },
-    {
-      title: "CourtReserve",
-      description: "Used to confirm evaluation-class signups + look up coach availability.",
-      fields: [
-        { path: "courtreserve.api_url", label: "API base URL", kind: "url_list",
-          placeholder: "https://app.courtreserve.com/api/...",
-          help: "Single URL — use the URL list field for one entry." },
-        { path: "courtreserve.api_key", label: "API key", kind: "secret",
-          help: "Stored encrypted; never shown in plain text after save." },
-      ],
-    },
-    {
-      title: "Polling",
-      fields: [
-        { path: "poll_query", label: "Gmail search query", kind: "text",
-          placeholder: "is:unread newer_than:1d" },
-        { path: "max_per_run", label: "Max messages per run", kind: "text",
-          placeholder: "20" },
-        { path: "program_name", label: "Program name", kind: "text",
-          placeholder: "Tier 1 Performance",
-          help: "Shown to applicants in the welcome email." },
-      ],
-    },
-  ],
-  tournament_reports: [
-    {
-      title: "Tournament data sources",
-      description: "Public sites the agent scans when generating a report. Add the URL patterns the agent should search.",
-      fields: [
-        { path: "source_config.usta_tennislink.urls", label: "USTA TennisLink URLs", kind: "url_list" },
-        { path: "source_config.utr.urls", label: "UTR URLs", kind: "url_list" },
-        { path: "source_config.tennis_recruiting.urls", label: "TennisRecruiting URLs", kind: "url_list" },
-      ],
-    },
-  ],
-  golf_lead_finder: [
-    {
-      title: "Gmail",
-      description: "Where approved outreach emails are sent from.",
-      fields: [
-        { path: "gmail.account", label: "Send-from address", kind: "oauth_gmail" },
-      ],
-    },
-    {
-      title: "Public golf data sources",
-      description: "Add the page URLs the agent should scan each week. WSC's golf coach edits these — same data sources, different watchlists per business.",
-      fields: [
-        { path: "source_config.ajga.urls", label: "AJGA pages", kind: "url_list",
-          placeholder: "https://www.ajga.org/players/leaderboard" },
-        { path: "source_config.junior_golf_scoreboard.urls", label: "Junior Golf Scoreboard pages", kind: "url_list",
-          placeholder: "https://www.jgscoreboard.com/rankings/state/WA" },
-        { path: "source_config.junior_golf_hub.urls", label: "Junior Golf Hub pages", kind: "url_list" },
-        { path: "source_config.wiaa_wa_golf.urls", label: "WIAA / state golf pages", kind: "url_list" },
-      ],
-    },
-    {
-      title: "Contact resolution",
-      description: "Optional — used to find a parent's email when the page only lists the kid.",
-      fields: [
-        { path: "hunter_io.api_key", label: "Hunter.io API key", kind: "secret",
-          help: "Optional. If supplied, the agent attempts email lookups; without it, prospects without contact info are skipped." },
-      ],
-    },
-    {
-      title: "Throttle",
-      fields: [
-        { path: "icp_threshold", label: "Min ICP score (0–10)", kind: "text", placeholder: "6" },
-        { path: "max_per_run", label: "Max prospects per run", kind: "text", placeholder: "10" },
-      ],
-    },
-  ],
-  signal_hunter: [
-    {
-      title: "Gmail",
-      fields: [
-        { path: "gmail.account", label: "Send-from address", kind: "oauth_gmail" },
-      ],
-    },
-    {
-      title: "Source URLs",
-      description: "Per-source URL lists the agent scans on each run.",
-      fields: [
-        { path: "source_config.usta_tennislink_wa_juniors.urls", label: "USTA TennisLink", kind: "url_list" },
-        { path: "source_config.utr_state_search.urls", label: "UTR state search", kind: "url_list" },
-      ],
-    },
-    {
-      title: "Contact resolution",
-      fields: [
-        { path: "hunter_io.api_key", label: "Hunter.io API key", kind: "secret" },
-      ],
-    },
-    {
-      title: "Throttle",
-      fields: [
-        { path: "icp_threshold", label: "Min ICP score (0–10)", kind: "text", placeholder: "7" },
-        { path: "max_per_run", label: "Max prospects per run", kind: "text", placeholder: "30" },
-      ],
-    },
-  ],
-  competitor_watch: [
-    {
-      title: "Watchlist",
-      description: "Competitor sites the agent scans every week. Add the homepage; add specific pages (pricing, events) if you want them tracked too.",
-      fields: [
-        { path: "watchlist", label: "Competitor homepages", kind: "url_list",
-          help: "One URL per line. Each becomes a tracked competitor." },
-      ],
-    },
-    {
-      title: "Delivery",
-      fields: [
-        { path: "gmail.account", label: "Email digest to", kind: "text",
-          placeholder: "owner@yourbusiness.com",
-          help: "Where the weekly recap is delivered." },
-        { path: "delivery_day", label: "Delivery day", kind: "text",
-          placeholder: "Monday" },
-      ],
-    },
-  ],
-  corporate_event_hunter: [
-    {
-      title: "Gmail",
-      fields: [
-        { path: "gmail.account", label: "Send-from address", kind: "oauth_gmail" },
-      ],
-    },
-    {
-      title: "Signal sources",
-      description: "Public news sources the agent monitors.",
-      fields: [
-        { path: "signal_sources_urls", label: "News page URLs", kind: "url_list",
-          help: "GeekWire, Puget Sound Business Journal, etc." },
-      ],
-    },
-    {
-      title: "Throttle",
-      fields: [
-        { path: "min_confidence", label: "Min confidence (1–10)", kind: "text", placeholder: "7" },
-        { path: "max_drafts_per_run", label: "Max drafts per run", kind: "text", placeholder: "5" },
-        { path: "lookback_days", label: "Lookback days", kind: "text", placeholder: "7" },
-      ],
-    },
-  ],
-};
+const EMPTY_FALLBACK: ConnectionSection[] = [
+  {
+    title: "Connections",
+    description: "This agent type doesn't have configurable connections yet.",
+    fields: [],
+  },
+];
 
 export default function ConnectionsTab({ data }: { data: AgentDetailData }) {
   const agentType =
     typeof (data.agent.config as Record<string, unknown>)?.type === "string"
       ? ((data.agent.config as Record<string, unknown>).type as string)
       : null;
-  const sections: ConnectionSection[] = (agentType
-    ? CONNECTION_SPEC_BY_TYPE[agentType]
-    : null) ?? [
-    {
-      title: "Connections",
-      description:
-        "This agent type doesn't have configurable connections yet.",
-      fields: [],
-    },
-  ];
+  const manifest = getManifest(agentType);
+  const sections: ConnectionSection[] = manifest?.connections ?? EMPTY_FALLBACK;
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -350,11 +159,20 @@ function Field({
     });
   }
 
+  const anchorId = `field-${field.path.replace(/\./g, "-")}`;
+
   return (
-    <div>
+    <div id={anchorId} className="scroll-mt-24">
       <label className="block">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-sm font-medium text-white">{field.label}</span>
+          <span className="text-sm font-medium text-white">
+            {field.label}
+            {field.required && (
+              <span className="ml-1.5 text-xs font-normal text-[#C89B3C]" title="Required">
+                Required
+              </span>
+            )}
+          </span>
           {field.kind === "oauth_gmail" && (
             <ConnectionStatus value={value} />
           )}
