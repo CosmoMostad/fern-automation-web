@@ -122,6 +122,25 @@ const AGENT_TYPES: AgentTypeSeed[] = [
     is_published: true,
   },
   {
+    key: "tier1_scheduling",
+    name: "Tier 1 Scheduling + Family Q&A",
+    description:
+      "Reads the Tier 1 Performance inbox, parses scheduling requests against coach availability windows, and drafts a reply proposing concrete slots. Handles family Q&A and rebooking conversations. Requires CourtReserve API access and a coach-availability source — preflight blocks runs until both are configured.",
+    category: "customer_ops",
+    trigger_kind: "inbound",
+    default_config: {
+      enabled: false,
+      approval_required: true,
+      poll_query: "is:unread newer_than:1d",
+      max_per_run: 15,
+      coach_calendar_source: null,
+      courtreserve_facility_id: null,
+    },
+    icon: "Calendar",
+    position: 50,
+    is_published: true,
+  },
+  {
     key: "signal_hunter",
     name: "Signal Hunter (Tennis)",
     description:
