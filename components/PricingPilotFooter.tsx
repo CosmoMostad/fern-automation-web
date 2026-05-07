@@ -313,6 +313,8 @@ export function SiteFooter() {
             <ul className="space-y-2 text-sm">
               <li><a href="#reviews" className="plain hover:text-white">From operators</a></li>
               <li><a href="mailto:cosmo@fernautomation.com" className="plain hover:text-white">Contact</a></li>
+              <li><Link href="/privacy" className="plain hover:text-white">Privacy</Link></li>
+              <li><Link href="/terms" className="plain hover:text-white">Terms</Link></li>
             </ul>
           </div>
           <div>
