@@ -200,6 +200,8 @@ export type Escalation = {
 
 export type KnowledgeScope = "org" | "agent";
 
+export type KnowledgeDocSourceKind = "manual" | "scrape";
+
 export type KnowledgeDoc = {
   id: string;
   org_id: string;
@@ -208,6 +210,9 @@ export type KnowledgeDoc = {
   title: string;
   body: string;
   position: number;
+  source_url: string | null;
+  source_kind: KnowledgeDocSourceKind;
+  source_scrape_request_id: string | null;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
@@ -250,6 +255,9 @@ export type AgentDetailData = {
   org_knowledge: KnowledgeDoc[];
   agent_knowledge: KnowledgeDoc[];
   examples: KnowledgeExample[];
+  // Recent scrape jobs targeting this agent's knowledge bucket.
+  // Drives the in-flight progress badges in the Knowledge tab.
+  scrape_requests: ScrapeRequest[];
   // Optional, populated only when the agent type calls for it.
   // Keeps tabs pre-rendered without per-tab data fetches.
   students?: Student[];
@@ -385,6 +393,38 @@ export type AgentRunRequest = {
   output_payload: Record<string, unknown> | null;
   error: string | null;
   queued_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  claimed_by: string | null;
+};
+
+/* ──────────────────────────────────────────────────────────────────────
+ * URL → scrape pipeline (migration 0008)
+ * ──────────────────────────────────────────────────────────────────── */
+
+export type ScrapeRequestStatus =
+  | "pending"
+  | "running"
+  | "done"
+  | "failed"
+  | "cancelled";
+
+export type ScrapeRequestMode = "single" | "domain";
+
+export type ScrapeRequest = {
+  id: string;
+  org_id: string;
+  agent_id: string | null;
+  scope: KnowledgeScope;
+  root_url: string;
+  mode: ScrapeRequestMode;
+  max_pages: number;
+  status: ScrapeRequestStatus;
+  error: string | null;
+  doc_ids: string[];
+  result_summary: { fetched?: number; failed?: number } | null;
+  requested_by: string | null;
+  created_at: string;
   started_at: string | null;
   completed_at: string | null;
   claimed_by: string | null;

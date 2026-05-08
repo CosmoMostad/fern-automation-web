@@ -431,3 +431,34 @@ export async function resolveEscalation(input: {
   revalidatePath(`/console/escalations`);
   return { ok: true };
 }
+
+/* ───────────── URL → SCRAPE PIPELINE ───────────── */
+
+export async function requestScrape(input: {
+  orgId: string;
+  agentId: string;
+  url: string;
+  mode?: "single" | "domain";
+  maxPages?: number;
+}): Promise<{ ok: true; requestId: string } | { ok: false; error: string }> {
+  const { enqueueScrapeRequest } = await import("@/lib/db/scrape-requests");
+  const result = await enqueueScrapeRequest({
+    orgId: input.orgId,
+    agentId: input.agentId,
+    url: input.url,
+    mode: input.mode,
+    maxPages: input.maxPages,
+  });
+  if (result.ok) revalidatePath(`/console/agents/${input.agentId}`);
+  return result;
+}
+
+export async function cancelScrapeRequest(input: {
+  requestId: string;
+  agentId: string;
+}): Promise<ActionResult> {
+  const { cancelScrapeRequestById } = await import("@/lib/db/scrape-requests");
+  const r = await cancelScrapeRequestById({ requestId: input.requestId });
+  if (r.ok) revalidatePath(`/console/agents/${input.agentId}`);
+  return r;
+}

@@ -11,6 +11,7 @@ import type {
   Org,
   OrgInvite,
   OrgMember,
+  ScrapeRequest,
 } from "@/lib/supabase/types";
 
 export type MemberRow = Pick<
@@ -26,6 +27,7 @@ export type BusinessSettingsData = {
   members: MemberRow[];
   pending_invites: OrgInvite[];
   org_knowledge: KnowledgeDoc[];
+  scrape_requests: ScrapeRequest[];
 };
 
 export type BusinessSettingsResult =
@@ -53,30 +55,39 @@ export async function getBusinessSettings(): Promise<BusinessSettingsResult> {
 
   const orgId = membership.org_id as string;
 
-  const [orgRes, allMembersRes, docsRes, invitesRes] = await Promise.all([
-    supabase
-      .from("orgs")
-      .select("id, slug, name, setup_status")
-      .eq("id", orgId)
-      .single(),
-    supabase
-      .from("org_members")
-      .select("id, user_id, role, display_name, created_at")
-      .eq("org_id", orgId)
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("knowledge_docs")
-      .select("*")
-      .eq("org_id", orgId)
-      .eq("scope", "org")
-      .order("position", { ascending: true }),
-    supabase
-      .from("org_invites")
-      .select("*")
-      .eq("org_id", orgId)
-      .is("accepted_at", null)
-      .order("created_at", { ascending: false }),
-  ]);
+  const [orgRes, allMembersRes, docsRes, invitesRes, scrapeRes] =
+    await Promise.all([
+      supabase
+        .from("orgs")
+        .select("id, slug, name, setup_status")
+        .eq("id", orgId)
+        .single(),
+      supabase
+        .from("org_members")
+        .select("id, user_id, role, display_name, created_at")
+        .eq("org_id", orgId)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("knowledge_docs")
+        .select("*")
+        .eq("org_id", orgId)
+        .eq("scope", "org")
+        .order("position", { ascending: true }),
+      supabase
+        .from("org_invites")
+        .select("*")
+        .eq("org_id", orgId)
+        .is("accepted_at", null)
+        .order("created_at", { ascending: false }),
+      // Org-scope scrape jobs (recent, any status). Drives the progress UI.
+      supabase
+        .from("scrape_requests")
+        .select("*")
+        .eq("org_id", orgId)
+        .eq("scope", "org")
+        .order("created_at", { ascending: false })
+        .limit(20),
+    ]);
 
   const orgRow = orgRes.data as Pick<Org, "id" | "slug" | "name" | "setup_status"> | null;
   if (!orgRow) return { ok: false, reason: "no-org" };
@@ -129,6 +140,7 @@ export async function getBusinessSettings(): Promise<BusinessSettingsResult> {
       members,
       pending_invites: (invitesRes.data ?? []) as OrgInvite[],
       org_knowledge: (docsRes.data ?? []) as KnowledgeDoc[],
+      scrape_requests: (scrapeRes.data ?? []) as ScrapeRequest[],
     },
   };
 }
