@@ -4,14 +4,21 @@ import { useState, useTransition } from "react";
 
 import { Sidebar, TopBar } from "@/components/console/Shell";
 import {
+  cancelOrgScrapeRequest,
   cancelTeamInvite,
   createOrgKnowledgeDoc,
   deleteOrgKnowledgeDoc,
   inviteTeamMember,
   removeTeamMember,
+  requestOrgScrape,
   updateOrgKnowledgeDoc,
   updateOrgName,
 } from "@/app/console/settings/business/actions";
+import {
+  ScrapeProgressPoller,
+  ScrapeRequestRow,
+  ScrapeUrlForm,
+} from "@/components/console/agent-tabs/KnowledgeTab";
 import type {
   BusinessSettingsData,
   MemberRow,
@@ -63,8 +70,29 @@ export default function BusinessSettings({ data }: { data: BusinessSettingsData 
             <OrgNameEditor orgId={data.org.id} initialName={data.org.name} />
           </section>
 
+          <ScrapeProgressPoller
+            activeCount={
+              data.scrape_requests.filter(
+                (r) => r.status === "pending" || r.status === "running"
+              ).length
+            }
+          />
+
           <section className="mb-8">
             <h2 className="text-base font-semibold text-white mb-3">Knowledge documents</h2>
+
+            {data.scrape_requests.length > 0 && (
+              <div className="space-y-2 mb-4">
+                {data.scrape_requests.map((r) => (
+                  <ScrapeRequestRow
+                    key={r.id}
+                    request={r}
+                    cancelAction={(id) => cancelOrgScrapeRequest({ requestId: id })}
+                  />
+                ))}
+              </div>
+            )}
+
             {data.org_knowledge.length === 0 ? (
               <SuggestedStarters orgId={data.org.id} />
             ) : (
@@ -74,7 +102,18 @@ export default function BusinessSettings({ data }: { data: BusinessSettingsData 
                 ))}
               </div>
             )}
-            <CreateForm orgId={data.org.id} />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <CreateForm orgId={data.org.id} />
+              <ScrapeUrlForm
+                submitAction={(input) =>
+                  requestOrgScrape({
+                    orgId: data.org.id,
+                    ...input,
+                  })
+                }
+              />
+            </div>
           </section>
 
           <section>

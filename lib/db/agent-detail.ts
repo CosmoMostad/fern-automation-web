@@ -18,6 +18,7 @@ import type {
   KnowledgeExample,
   KnowledgeDocVersion,
   Org,
+  ScrapeRequest,
   Student,
 } from "@/lib/supabase/types";
 
@@ -59,6 +60,7 @@ export async function getAgentDetail(
     orgKnowledgeRes,
     agentKnowledgeRes,
     examplesRes,
+    scrapeRequestsRes,
   ] = await Promise.all([
     supabase
       .from("orgs")
@@ -107,6 +109,14 @@ export async function getAgentDetail(
       .select("*")
       .eq("agent_id", agentId)
       .order("position", { ascending: true }),
+    // Scrape jobs targeting this agent's knowledge bucket — recent + still-relevant.
+    // Includes done/failed for the past 24h so users see the outcome.
+    supabase
+      .from("scrape_requests")
+      .select("*")
+      .eq("agent_id", agentId)
+      .order("created_at", { ascending: false })
+      .limit(20),
   ]);
 
   const orgRow = orgRes.data as Pick<Org, "id" | "slug" | "name" | "setup_status"> | null;
@@ -234,6 +244,7 @@ export async function getAgentDetail(
       org_knowledge: (orgKnowledgeRes.data ?? []) as KnowledgeDoc[],
       agent_knowledge: (agentKnowledgeRes.data ?? []) as KnowledgeDoc[],
       examples: (examplesRes.data ?? []) as KnowledgeExample[],
+      scrape_requests: (scrapeRequestsRes.data ?? []) as ScrapeRequest[],
       students,
       prospects,
     },

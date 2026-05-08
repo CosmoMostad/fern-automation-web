@@ -221,6 +221,35 @@ export async function removeTeamMember(input: {
   return { ok: true };
 }
 
+/* ───────────── URL → SCRAPE PIPELINE (org-scope) ───────────── */
+
+export async function requestOrgScrape(input: {
+  orgId: string;
+  url: string;
+  mode?: "single" | "domain";
+  maxPages?: number;
+}): Promise<{ ok: true; requestId: string } | { ok: false; error: string }> {
+  const { enqueueScrapeRequest } = await import("@/lib/db/scrape-requests");
+  const r = await enqueueScrapeRequest({
+    orgId: input.orgId,
+    agentId: null,
+    url: input.url,
+    mode: input.mode,
+    maxPages: input.maxPages,
+  });
+  if (r.ok) revalidatePath("/console/settings/business");
+  return r;
+}
+
+export async function cancelOrgScrapeRequest(input: {
+  requestId: string;
+}): Promise<Result> {
+  const { cancelScrapeRequestById } = await import("@/lib/db/scrape-requests");
+  const r = await cancelScrapeRequestById({ requestId: input.requestId });
+  if (r.ok) revalidatePath("/console/settings/business");
+  return r;
+}
+
 /**
  * Called from the dashboard loader on first sign-in: if the signed-in user
  * has no membership but there's a pending invite for their email, attach
