@@ -462,3 +462,13 @@ export async function cancelScrapeRequest(input: {
   if (r.ok) revalidatePath(`/console/agents/${input.agentId}`);
   return r;
 }
+
+export async function dismissScrapeRequest(input: {
+  requestId: string;
+  agentId: string;
+}): Promise<ActionResult> {
+  const { dismissScrapeRequestById } = await import("@/lib/db/scrape-requests");
+  const r = await dismissScrapeRequestById({ requestId: input.requestId });
+  if (r.ok) revalidatePath(`/console/agents/${input.agentId}`);
+  return r;
+}

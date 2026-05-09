@@ -28,8 +28,8 @@ export type EnqueueScrapeResult =
   | { ok: true; requestId: string }
   | { ok: false; error: string };
 
-const DEFAULT_MAX_PAGES = 10;
-const HARD_MAX_PAGES = 50;
+const DEFAULT_MAX_PAGES = 25;
+const HARD_MAX_PAGES = 100;
 
 function normalizeUrl(raw: string): string | null {
   const trimmed = raw.trim();
@@ -119,6 +119,51 @@ export async function enqueueScrapeRequest(
 
 export type CancelScrapeInput = { requestId: string };
 export type CancelScrapeResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Hard-delete a scrape_requests row that's already in a terminal state
+ * (done / failed / cancelled). Used for the "Dismiss" button so users
+ * can clean up bad URLs / stale results from the Knowledge tab list.
+ *
+ * Refuses to dismiss a pending/running row — those should be cancelled
+ * via cancelScrapeRequestById instead.
+ */
+export async function dismissScrapeRequestById(
+  input: CancelScrapeInput
+): Promise<CancelScrapeResult> {
+  if (!isSupabaseConfigured()) {
+    return { ok: false, error: "Supabase isn't connected." };
+  }
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  // RLS read-gate confirms the user belongs to this row's org.
+  const { data: row } = await supabase
+    .from("scrape_requests")
+    .select("id, status")
+    .eq("id", input.requestId)
+    .maybeSingle();
+  if (!row) return { ok: false, error: "Request not found or no access." };
+
+  const TERMINAL: Array<typeof row.status> = ["done", "failed", "cancelled"];
+  if (!TERMINAL.includes(row.status)) {
+    return {
+      ok: false,
+      error: "Use Cancel for in-flight scrapes, not Dismiss.",
+    };
+  }
+
+  const admin = createSupabaseServiceRoleClient();
+  const { error } = await admin
+    .from("scrape_requests")
+    .delete()
+    .eq("id", input.requestId);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
 
 export async function cancelScrapeRequestById(
   input: CancelScrapeInput

@@ -7,6 +7,7 @@ import {
   cancelScrapeRequest,
   createKnowledgeDoc,
   deleteKnowledgeDoc,
+  dismissScrapeRequest,
   requestScrape,
   updateKnowledgeDoc,
 } from "@/app/console/agents/[id]/actions";
@@ -77,6 +78,9 @@ export default function KnowledgeTab({ data }: { data: AgentDetailData }) {
                 request={r}
                 cancelAction={(id) =>
                   cancelScrapeRequest({ requestId: id, agentId: data.agent.id })
+                }
+                dismissAction={(id) =>
+                  dismissScrapeRequest({ requestId: id, agentId: data.agent.id })
                 }
               />
             ))}
@@ -394,7 +398,7 @@ export function ScrapeUrlForm({
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState("");
   const [mode, setMode] = useState<"single" | "domain">("domain");
-  const [maxPages, setMaxPages] = useState(10);
+  const [maxPages, setMaxPages] = useState(25);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -468,9 +472,9 @@ export function ScrapeUrlForm({
           <input
             type="number"
             min={1}
-            max={50}
+            max={100}
             value={maxPages}
-            onChange={(e) => setMaxPages(parseInt(e.target.value, 10) || 10)}
+            onChange={(e) => setMaxPages(parseInt(e.target.value, 10) || 25)}
             className="w-20 bg-black/30 border border-white/10 rounded-md px-2 py-1 text-xs text-white focus:border-fern-700 outline-none"
           />
         </div>
@@ -506,9 +510,13 @@ export function ScrapeUrlForm({
 export function ScrapeRequestRow({
   request: r,
   cancelAction,
+  dismissAction,
 }: {
   request: ScrapeRequest;
   cancelAction: (
+    requestId: string
+  ) => Promise<{ ok: true } | { ok: false; error: string }>;
+  dismissAction?: (
     requestId: string
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
 }) {
@@ -523,7 +531,18 @@ export function ScrapeRequestRow({
     });
   }
 
+  function dismiss() {
+    if (!dismissAction) return;
+    setError(null);
+    startTransition(async () => {
+      const result = await dismissAction(r.id);
+      if (!result.ok) setError(result.error);
+    });
+  }
+
   const tone = TONE_BY_STATUS[r.status];
+  const isTerminal =
+    r.status === "done" || r.status === "failed" || r.status === "cancelled";
 
   return (
     <div className={`rounded-lg border ${tone.border} ${tone.bg} px-4 py-3`}>
@@ -560,6 +579,16 @@ export function ScrapeRequestRow({
             className="text-xs text-white/65 hover:text-white shrink-0 disabled:opacity-50"
           >
             {pending ? "…" : "Cancel"}
+          </button>
+        )}
+        {isTerminal && dismissAction && (
+          <button
+            disabled={pending}
+            onClick={dismiss}
+            className="text-xs text-white/55 hover:text-white shrink-0 disabled:opacity-50"
+            title="Remove this row from the list"
+          >
+            {pending ? "…" : "Dismiss"}
           </button>
         )}
       </div>

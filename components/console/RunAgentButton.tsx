@@ -184,13 +184,6 @@ function PreflightPanel({
 }
 
 function MissingRow({ item }: { item: MissingItem }) {
-  const icon =
-    item.kind === "connection"
-      ? "🔌"
-      : item.kind === "knowledge"
-      ? "📚"
-      : "•";
-
   return (
     <Link
       href={item.fixHref}
@@ -198,9 +191,7 @@ function MissingRow({ item }: { item: MissingItem }) {
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex items-center gap-3">
-          <span className="text-base shrink-0" aria-hidden>
-            {icon}
-          </span>
+          <KindIcon kind={item.kind} />
           <div className="min-w-0">
             <div className="text-sm text-white truncate">{item.label}</div>
             <div className="text-xs text-white/55 truncate">
@@ -217,6 +208,45 @@ function MissingRow({ item }: { item: MissingItem }) {
         </span>
       </div>
     </Link>
+  );
+}
+
+function KindIcon({ kind }: { kind: MissingItem["kind"] }) {
+  const stroke = "text-white/55 group-hover:text-white/80 transition-colors";
+  if (kind === "connection") {
+    return (
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 16 16"
+        fill="none"
+        className={`shrink-0 ${stroke}`}
+        aria-hidden
+      >
+        <path d="M9.5 6.5L13 3M6.5 9.5L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M5 11l-2 2a2 2 0 0 1-2.83-2.83l2-2M11 5l2-2a2 2 0 0 1 2.83 2.83l-2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (kind === "knowledge") {
+    return (
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 16 16"
+        fill="none"
+        className={`shrink-0 ${stroke}`}
+        aria-hidden
+      >
+        <path d="M3 3.5A1.5 1.5 0 0 1 4.5 2H13v11H4.5A1.5 1.5 0 0 1 3 11.5v-8z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+        <path d="M3 11.5A1.5 1.5 0 0 1 4.5 10H13" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  return (
+    <span className={`shrink-0 text-sm ${stroke}`} aria-hidden>
+      ·
+    </span>
   );
 }
 
