@@ -18,13 +18,16 @@ import {
 import {
   ScrapeProgressPoller,
   ScrapeRequestRow,
-  ScrapeUrlForm,
 } from "@/components/console/agent-tabs/KnowledgeTab";
 import type {
   BusinessSettingsData,
   MemberRow,
 } from "@/lib/db/business-settings";
-import type { KnowledgeDoc, OrgInvite } from "@/lib/supabase/types";
+import type {
+  KnowledgeDoc,
+  OrgInvite,
+  ScrapeRequest,
+} from "@/lib/supabase/types";
 
 const SUGGESTED_DOCS = [
   {
@@ -80,20 +83,23 @@ export default function BusinessSettings({ data }: { data: BusinessSettingsData 
           />
 
           <section className="mb-8">
-            <h2 className="text-base font-semibold text-white mb-3">Knowledge documents</h2>
+            <h2 className="text-base font-semibold text-white mb-1">Primary website</h2>
+            <p className="text-xs text-white/55 mb-3">
+              The single source of truth Fern reads to learn about your business.
+              Re-scrape anytime to pull in fresh content.
+            </p>
+            <PrimaryWebsite
+              orgId={data.org.id}
+              scrapes={data.scrape_requests}
+            />
+          </section>
 
-            {data.scrape_requests.length > 0 && (
-              <div className="space-y-2 mb-4">
-                {data.scrape_requests.map((r) => (
-                  <ScrapeRequestRow
-                    key={r.id}
-                    request={r}
-                    cancelAction={(id) => cancelOrgScrapeRequest({ requestId: id })}
-                    dismissAction={(id) => dismissOrgScrapeRequest({ requestId: id })}
-                  />
-                ))}
-              </div>
-            )}
+          <section className="mb-8">
+            <h2 className="text-base font-semibold text-white mb-1">Knowledge documents</h2>
+            <p className="text-xs text-white/55 mb-3">
+              Pages from your website (above) plus anything you add by hand —
+              policies, voice & tone, signature, hours.
+            </p>
 
             {data.org_knowledge.length === 0 ? (
               <SuggestedStarters orgId={data.org.id} />
@@ -105,17 +111,7 @@ export default function BusinessSettings({ data }: { data: BusinessSettingsData 
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <CreateForm orgId={data.org.id} />
-              <ScrapeUrlForm
-                submitAction={(input) =>
-                  requestOrgScrape({
-                    orgId: data.org.id,
-                    ...input,
-                  })
-                }
-              />
-            </div>
+            <CreateForm orgId={data.org.id} />
           </section>
 
           <section>
@@ -696,4 +692,224 @@ function timeAgo(iso: string): string {
   if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
   if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
   return `${Math.floor(sec / 86400)}d ago`;
+}
+
+/* ───────────── PRIMARY WEBSITE ───────────── */
+
+/**
+ * Single source of truth for "what website is this business?". Replaces the
+ * old "add another scrape URL" flow which let users stack contradictory
+ * sources. The current primary website = root_url of the most recent
+ * non-cancelled scrape_request (org-scope). Re-scraping the same URL
+ * replaces prior docs (handled in the daemon).
+ */
+function PrimaryWebsite({
+  orgId,
+  scrapes,
+}: {
+  orgId: string;
+  scrapes: ScrapeRequest[];
+}) {
+  // Most recent non-cancelled scrape (the loader returns by created_at desc).
+  const current = scrapes.find((s) => s.status !== "cancelled");
+  const inFlight =
+    current && (current.status === "pending" || current.status === "running")
+      ? current
+      : null;
+  const settled =
+    current && (current.status === "done" || current.status === "failed")
+      ? current
+      : null;
+
+  const [showForm, setShowForm] = useState(!current);
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function rescrape(url: string) {
+    if (
+      !confirm(
+        `Re-scrape ${url}?\n\nThis will refetch every page and replace the existing documents from this site. Any manual edits to scraped pages will be lost.`
+      )
+    )
+      return;
+    setError(null);
+    startTransition(async () => {
+      const r = await requestOrgScrape({
+        orgId,
+        url,
+        mode: "domain",
+        maxPages: current?.max_pages ?? 25,
+      });
+      if (!r.ok) setError(r.error);
+    });
+  }
+
+  function dismiss(id: string) {
+    setError(null);
+    startTransition(async () => {
+      const r = await dismissOrgScrapeRequest({ requestId: id });
+      if (!r.ok) setError(r.error);
+    });
+  }
+
+  return (
+    <div className="space-y-3">
+      {inFlight && (
+        <ScrapeRequestRow
+          request={inFlight}
+          cancelAction={(id) => cancelOrgScrapeRequest({ requestId: id })}
+          dismissAction={(id) => dismissOrgScrapeRequest({ requestId: id })}
+        />
+      )}
+
+      {settled && !showForm && (
+        <div
+          className={`rounded-lg border ${
+            settled.status === "failed"
+              ? "border-red-500/25 bg-red-500/[0.05]"
+              : "border-white/15 bg-white/[0.04]"
+          } px-4 py-3`}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-sm text-white truncate">
+                <a
+                  href={settled.root_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="plain hover:text-fern-300 underline"
+                >
+                  {settled.root_url}
+                </a>
+              </div>
+              <div className="text-[11px] text-white/55 mt-1">
+                {settled.status === "done" && settled.result_summary
+                  ? `${settled.result_summary.fetched ?? 0} pages · scraped ${timeAgo(
+                      settled.completed_at ?? settled.created_at
+                    )}`
+                  : settled.status === "failed"
+                  ? `Failed${settled.error ? ` — ${settled.error.slice(0, 200)}` : ""}`
+                  : ""}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => rescrape(settled.root_url)}
+                disabled={pending}
+                className="text-xs text-white/85 hover:text-white border border-white/15 rounded-md px-2.5 py-1.5 hover:bg-white/5 disabled:opacity-50"
+              >
+                Re-scrape
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForm(true)}
+                disabled={pending}
+                className="text-xs text-white/65 hover:text-white border border-white/15 rounded-md px-2.5 py-1.5 hover:bg-white/5 disabled:opacity-50"
+              >
+                Change website
+              </button>
+              {settled.status === "failed" && (
+                <button
+                  type="button"
+                  onClick={() => dismiss(settled.id)}
+                  disabled={pending}
+                  className="text-xs text-white/55 hover:text-white border border-white/15 rounded-md px-2.5 py-1.5 hover:bg-white/5 disabled:opacity-50"
+                >
+                  Dismiss
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {(showForm || (!current && !inFlight)) && (
+        <PrimaryWebsiteForm
+          orgId={orgId}
+          onCancel={settled ? () => setShowForm(false) : undefined}
+        />
+      )}
+
+      {error && <div className="text-xs text-red-400">{error}</div>}
+    </div>
+  );
+}
+
+function PrimaryWebsiteForm({
+  orgId,
+  onCancel,
+}: {
+  orgId: string;
+  onCancel?: () => void;
+}) {
+  const [url, setUrl] = useState("");
+  const [maxPages, setMaxPages] = useState(25);
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function submit() {
+    setError(null);
+    startTransition(async () => {
+      const r = await requestOrgScrape({
+        orgId,
+        url,
+        mode: "domain",
+        maxPages,
+      });
+      if (r.ok) {
+        setUrl("");
+        if (onCancel) onCancel();
+      } else {
+        setError(r.error);
+      }
+    });
+  }
+
+  return (
+    <div className="rounded-lg border border-dashed border-white/15 bg-white/[0.02] p-4">
+      <input
+        autoFocus
+        placeholder="https://yourbusiness.com"
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+        className="w-full bg-black/30 border border-white/10 rounded-md px-3 py-2 text-sm text-white mb-3 focus:border-fern-700 outline-none"
+      />
+      <div className="flex items-center gap-3 mb-3">
+        <label className="text-xs text-white/65">Max pages</label>
+        <input
+          type="number"
+          min={1}
+          max={100}
+          value={maxPages}
+          onChange={(e) => setMaxPages(parseInt(e.target.value, 10) || 25)}
+          className="w-20 bg-black/30 border border-white/10 rounded-md px-2 py-1 text-xs text-white focus:border-fern-700 outline-none"
+        />
+        <span className="text-[11px] text-white/45">
+          Homepage + linked pages, capped here.
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          disabled={pending || !url.trim()}
+          onClick={submit}
+          className="text-xs bg-fern-700 hover:bg-fern-600 text-white px-3 py-1.5 rounded-md disabled:opacity-50"
+        >
+          {pending ? "Queueing…" : "Set as primary website"}
+        </button>
+        {onCancel && (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={onCancel}
+            className="text-xs text-white/65 hover:text-white px-3 py-1.5 rounded-md"
+          >
+            Cancel
+          </button>
+        )}
+        {error && <span className="text-xs text-red-400">{error}</span>}
+      </div>
+    </div>
+  );
 }
