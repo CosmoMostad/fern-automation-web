@@ -472,3 +472,46 @@ export async function dismissScrapeRequest(input: {
   if (r.ok) revalidatePath(`/console/agents/${input.agentId}`);
   return r;
 }
+
+export async function requestExampleBuild(input: {
+  orgId: string;
+  agentId: string;
+  lookbackDays?: number;
+  maxExamples?: number;
+}): Promise<{ ok: true; requestId: string } | { ok: false; error: string }> {
+  const { enqueueExampleBuildRequest } = await import(
+    "@/lib/db/example-build-requests"
+  );
+  const result = await enqueueExampleBuildRequest({
+    orgId: input.orgId,
+    agentId: input.agentId,
+    lookbackDays: input.lookbackDays,
+    maxExamples: input.maxExamples,
+  });
+  if (result.ok) revalidatePath(`/console/agents/${input.agentId}`);
+  return result;
+}
+
+export async function cancelExampleBuild(input: {
+  requestId: string;
+  agentId: string;
+}): Promise<ActionResult> {
+  const { cancelExampleBuildRequestById } = await import(
+    "@/lib/db/example-build-requests"
+  );
+  const r = await cancelExampleBuildRequestById({ requestId: input.requestId });
+  if (r.ok) revalidatePath(`/console/agents/${input.agentId}`);
+  return r;
+}
+
+export async function dismissExampleBuild(input: {
+  requestId: string;
+  agentId: string;
+}): Promise<ActionResult> {
+  const { dismissExampleBuildRequestById } = await import(
+    "@/lib/db/example-build-requests"
+  );
+  const r = await dismissExampleBuildRequestById({ requestId: input.requestId });
+  if (r.ok) revalidatePath(`/console/agents/${input.agentId}`);
+  return r;
+}

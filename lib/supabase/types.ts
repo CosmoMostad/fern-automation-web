@@ -229,6 +229,8 @@ export type KnowledgeDocVersion = {
   edited_at: string;
 };
 
+export type KnowledgeExampleSource = "manual" | "gmail_import";
+
 export type KnowledgeExample = {
   id: string;
   org_id: string;
@@ -238,6 +240,9 @@ export type KnowledgeExample = {
   outbound: string;
   active: boolean;
   position: number;
+  source: KnowledgeExampleSource;
+  source_request_id: string | null;
+  gmail_message_id: string | null;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
@@ -258,6 +263,9 @@ export type AgentDetailData = {
   // Recent scrape jobs targeting this agent's knowledge bucket.
   // Drives the in-flight progress badges in the Knowledge tab.
   scrape_requests: ScrapeRequest[];
+  // Recent Gmail → examples build jobs for this agent.
+  // Drives the status row + polling on the Examples tab.
+  example_build_requests: ExampleBuildRequest[];
   // Optional, populated only when the agent type calls for it.
   // Keeps tabs pre-rendered without per-tab data fetches.
   students?: Student[];
@@ -423,6 +431,35 @@ export type ScrapeRequest = {
   error: string | null;
   doc_ids: string[];
   result_summary: { fetched?: number; failed?: number } | null;
+  requested_by: string | null;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  claimed_by: string | null;
+};
+
+export type ExampleBuildRequestStatus =
+  | "pending"
+  | "running"
+  | "done"
+  | "failed"
+  | "cancelled";
+
+export type ExampleBuildRequest = {
+  id: string;
+  org_id: string;
+  agent_id: string;
+  lookback_days: number;
+  max_examples: number;
+  status: ExampleBuildRequestStatus;
+  error: string | null;
+  example_ids: string[];
+  result_summary: {
+    scanned?: number;
+    pairs_found?: number;
+    saved?: number;
+    skipped_duplicates?: number;
+  } | null;
   requested_by: string | null;
   created_at: string;
   started_at: string | null;
