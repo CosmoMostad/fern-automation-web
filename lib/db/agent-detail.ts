@@ -19,6 +19,7 @@ import type {
   KnowledgeDocVersion,
   Org,
   ScrapeRequest,
+  ExampleBuildRequest,
   Student,
 } from "@/lib/supabase/types";
 
@@ -61,6 +62,7 @@ export async function getAgentDetail(
     agentKnowledgeRes,
     examplesRes,
     scrapeRequestsRes,
+    exampleBuildRequestsRes,
   ] = await Promise.all([
     supabase
       .from("orgs")
@@ -117,6 +119,13 @@ export async function getAgentDetail(
       .eq("agent_id", agentId)
       .order("created_at", { ascending: false })
       .limit(20),
+    // Recent Gmail → examples build jobs. Drives the Examples tab status row.
+    supabase
+      .from("example_build_requests")
+      .select("*")
+      .eq("agent_id", agentId)
+      .order("created_at", { ascending: false })
+      .limit(10),
   ]);
 
   const orgRow = orgRes.data as Pick<Org, "id" | "slug" | "name" | "setup_status"> | null;
@@ -245,6 +254,7 @@ export async function getAgentDetail(
       agent_knowledge: (agentKnowledgeRes.data ?? []) as KnowledgeDoc[],
       examples: (examplesRes.data ?? []) as KnowledgeExample[],
       scrape_requests: (scrapeRequestsRes.data ?? []) as ScrapeRequest[],
+      example_build_requests: (exampleBuildRequestsRes.data ?? []) as ExampleBuildRequest[],
       students,
       prospects,
     },
