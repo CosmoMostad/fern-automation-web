@@ -4,11 +4,8 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import {
-  cancelScrapeRequest,
   createKnowledgeDoc,
   deleteKnowledgeDoc,
-  dismissScrapeRequest,
-  requestScrape,
   updateKnowledgeDoc,
 } from "@/app/console/agents/[id]/actions";
 import type {
@@ -18,22 +15,16 @@ import type {
 } from "@/lib/supabase/types";
 
 export default function KnowledgeTab({ data }: { data: AgentDetailData }) {
-  // Live-refresh while scrape jobs are in flight.
-  const activeScrapes = data.scrape_requests.filter(
-    (r) => r.status === "pending" || r.status === "running"
-  );
-
   return (
     <div className="space-y-8 max-w-3xl">
-      <ScrapeProgressPoller activeCount={activeScrapes.length} />
-
-      {/* Org base layer */}
+      {/* Org base layer (read-only — includes scraped website pages) */}
       <section>
         <header className="mb-3 flex items-baseline justify-between">
           <div>
             <h3 className="text-sm font-semibold text-white">Business profile</h3>
             <p className="mt-1 text-xs text-white/55">
-              Shared across every agent in {data.org.name}. Edit in Settings &rarr; Business.
+              Shared across every agent in {data.org.name}. Includes your website
+              and business-wide policies. Edit in Settings &rarr; Business.
             </p>
           </div>
           <a
@@ -47,7 +38,7 @@ export default function KnowledgeTab({ data }: { data: AgentDetailData }) {
         {data.org_knowledge.length === 0 ? (
           <EmptyHint
             text="No business-wide knowledge yet."
-            cta="Add your hours, voice, and signature in Settings."
+            cta="Set your primary website + policies in Settings."
           />
         ) : (
           <div className="space-y-2">
@@ -58,34 +49,20 @@ export default function KnowledgeTab({ data }: { data: AgentDetailData }) {
         )}
       </section>
 
-      {/* Agent-scoped knowledge */}
+      {/* Agent-scoped knowledge — deliberate, hand-crafted only.
+          No scrape form here on purpose: the website lives at org scope so
+          every agent benefits from one source of truth. Agent knowledge is
+          for the deliberate stuff: policies, decision rules, response style. */}
       <section>
         <header className="mb-3 flex items-baseline justify-between">
           <div>
             <h3 className="text-sm font-semibold text-white">Agent knowledge</h3>
             <p className="mt-1 text-xs text-white/55">
-              Only {data.agent.name} sees these. Use this for the agent&rsquo;s policies,
-              procedures, FAQs, and decision rules.
+              Only {data.agent.name} sees these. Use this for policies and
+              decision rules specific to this agent &mdash; not bulk web content.
             </p>
           </div>
         </header>
-
-        {data.scrape_requests.length > 0 && (
-          <div className="space-y-2 mb-4">
-            {data.scrape_requests.map((r) => (
-              <ScrapeRequestRow
-                key={r.id}
-                request={r}
-                cancelAction={(id) =>
-                  cancelScrapeRequest({ requestId: id, agentId: data.agent.id })
-                }
-                dismissAction={(id) =>
-                  dismissScrapeRequest({ requestId: id, agentId: data.agent.id })
-                }
-              />
-            ))}
-          </div>
-        )}
 
         {data.agent_knowledge.length === 0 ? (
           <EmptyHint
@@ -100,22 +77,11 @@ export default function KnowledgeTab({ data }: { data: AgentDetailData }) {
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <CreateDocForm
-            orgId={data.org.id}
-            agentId={data.agent.id}
-            scope="agent"
-          />
-          <ScrapeUrlForm
-            submitAction={(input) =>
-              requestScrape({
-                orgId: data.org.id,
-                agentId: data.agent.id,
-                ...input,
-              })
-            }
-          />
-        </div>
+        <CreateDocForm
+          orgId={data.org.id}
+          agentId={data.agent.id}
+          scope="agent"
+        />
       </section>
     </div>
   );

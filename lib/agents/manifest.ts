@@ -107,25 +107,6 @@ export const MANIFESTS: Record<string, AgentManifest> = {
           },
         ],
       },
-      {
-        title: "Polling",
-        fields: [
-          {
-            path: "poll_query",
-            label: "Gmail search query",
-            kind: "text",
-            required: true,
-            placeholder: "is:unread newer_than:1d",
-            help: "Standard Gmail search syntax. Restricts which messages the agent picks up.",
-          },
-          {
-            path: "max_per_run",
-            label: "Max messages per run",
-            kind: "text",
-            placeholder: "20",
-          },
-        ],
-      },
     ],
     requiredKnowledge: [
       {

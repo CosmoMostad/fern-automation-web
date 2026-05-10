@@ -2,7 +2,11 @@
 
 import { useState, useTransition } from "react";
 
-import { updateAgentSettings } from "@/app/console/agents/[id]/actions";
+import {
+  updateAgentConfig,
+  updateAgentSettings,
+} from "@/app/console/agents/[id]/actions";
+import { getManifest } from "@/lib/agents/manifest";
 import type {
   AgentDetailData,
   AgentStatus,
@@ -198,7 +202,222 @@ export default function AgentSettingsTab({ data }: { data: AgentDetailData }) {
         {saved && !dirty && <span className="text-xs text-fern-300">Saved.</span>}
         {error && <span className="text-xs text-red-400">{error}</span>}
       </div>
+
+      <RunSchedule data={data} />
     </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Run schedule — only for agents whose triggerKind is "inbound" (they poll
+ * a Gmail inbox on a cadence). For other agent types this section is hidden.
+ *
+ * Two settings:
+ *   - poll_query  : which emails to look at (Gmail search syntax)
+ *   - max_per_run : cap on emails processed per run
+ *
+ * Presets cover ~95% of cases; "Custom" reveals a raw input for power users.
+ * Inline-saves on each change so users get immediate feedback.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+const QUERY_PRESETS: Array<{ value: string; label: string; help: string }> = [
+  {
+    value: "is:unread newer_than:1d",
+    label: "Unread, last 24 hours",
+    help: "Recommended. Catches new mail without re-reading old threads.",
+  },
+  {
+    value: "is:unread newer_than:7d",
+    label: "Unread, last 7 days",
+    help: "Use when first turning the agent on, to catch up on a backlog.",
+  },
+  {
+    value: "is:unread",
+    label: "All unread, no time limit",
+    help: "Aggressive. The agent will work through every unread message in the inbox.",
+  },
+];
+
+function RunSchedule({ data }: { data: AgentDetailData }) {
+  const agentType =
+    typeof (data.agent.config as Record<string, unknown>)?.type === "string"
+      ? ((data.agent.config as Record<string, unknown>).type as string)
+      : null;
+  const manifest = getManifest(agentType);
+  if (!manifest || manifest.triggerKind !== "inbound") return null;
+
+  const config = (data.agent.config ?? {}) as Record<string, unknown>;
+  const initialPollQuery =
+    typeof config.poll_query === "string" && config.poll_query.length > 0
+      ? config.poll_query
+      : QUERY_PRESETS[0].value;
+  const initialMaxPerRun =
+    typeof config.max_per_run === "number"
+      ? config.max_per_run
+      : typeof config.max_per_run === "string"
+      ? parseInt(config.max_per_run, 10) || 20
+      : 20;
+
+  const presetMatch = QUERY_PRESETS.find((p) => p.value === initialPollQuery);
+  const [pollQuery, setPollQuery] = useState(initialPollQuery);
+  const [maxPerRun, setMaxPerRun] = useState(initialMaxPerRun);
+  const [showCustom, setShowCustom] = useState(!presetMatch);
+  const [pending, startTransition] = useTransition();
+  const [savedPath, setSavedPath] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  function persist(path: string, value: unknown) {
+    setError(null);
+    setSavedPath(null);
+    startTransition(async () => {
+      const r = await updateAgentConfig({ agentId: data.agent.id, path, value });
+      if (r.ok) {
+        setSavedPath(path);
+        setTimeout(() => setSavedPath((p) => (p === path ? null : p)), 1500);
+      } else {
+        setError(r.error);
+      }
+    });
+  }
+
+  function selectPreset(value: string) {
+    setShowCustom(false);
+    setPollQuery(value);
+    persist("poll_query", value);
+  }
+
+  function selectCustom() {
+    setShowCustom(true);
+  }
+
+  function saveCustom() {
+    persist("poll_query", pollQuery);
+  }
+
+  function saveMaxPerRun(n: number) {
+    setMaxPerRun(n);
+    persist("max_per_run", n);
+  }
+
+  return (
+    <section className="border-t border-white/8 pt-6 mt-2 space-y-5">
+      <header>
+        <h2 className="text-base font-semibold text-white">Run schedule</h2>
+        <p className="mt-1 text-xs text-white/55">
+          When this agent runs, it picks up emails matching the filter below.
+          The schedule itself (how often it checks) is set by Fern when the
+          agent is provisioned.
+        </p>
+      </header>
+
+      <Field
+        label="What emails to watch"
+        hint="Pick a preset, or write a custom Gmail search query if you need something specific."
+      >
+        <div className="space-y-1.5">
+          {QUERY_PRESETS.map((p) => {
+            const active = !showCustom && pollQuery === p.value;
+            return (
+              <button
+                key={p.value}
+                type="button"
+                onClick={() => selectPreset(p.value)}
+                disabled={pending}
+                className={`w-full text-left px-3 py-2.5 rounded-md border transition ${
+                  active
+                    ? "bg-fern-700/15 border-fern-700/40"
+                    : "bg-white/[0.02] border-white/8 hover:border-white/20"
+                } disabled:opacity-50`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-white">{p.label}</span>
+                  {active && (
+                    <span className="text-[9px] font-mono uppercase tracking-wider text-fern-300">
+                      selected
+                    </span>
+                  )}
+                </div>
+                <div className="mt-0.5 text-xs text-white/55">{p.help}</div>
+              </button>
+            );
+          })}
+
+          <button
+            type="button"
+            onClick={selectCustom}
+            disabled={pending}
+            className={`w-full text-left px-3 py-2.5 rounded-md border transition ${
+              showCustom
+                ? "bg-fern-700/15 border-fern-700/40"
+                : "bg-white/[0.02] border-white/8 hover:border-white/20"
+            } disabled:opacity-50`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-white">
+                Custom Gmail query{" "}
+                <span className="text-white/45 font-normal">(advanced)</span>
+              </span>
+              {showCustom && (
+                <span className="text-[9px] font-mono uppercase tracking-wider text-fern-300">
+                  selected
+                </span>
+              )}
+            </div>
+            <div className="mt-0.5 text-xs text-white/55">
+              Use any Gmail search syntax — e.g. <code className="text-white/75">label:vip is:unread</code>.
+            </div>
+          </button>
+
+          {showCustom && (
+            <div className="pt-2 flex items-center gap-2">
+              <input
+                value={pollQuery}
+                onChange={(e) => setPollQuery(e.target.value)}
+                placeholder="is:unread newer_than:1d"
+                className="flex-1 bg-black/40 border border-white/15 rounded-md px-3 py-2 text-sm text-white font-mono placeholder:text-white/30 focus:border-fern-500 outline-none"
+              />
+              <button
+                type="button"
+                onClick={saveCustom}
+                disabled={pending || pollQuery.trim().length === 0}
+                className="text-xs bg-fern-700 hover:bg-fern-600 disabled:opacity-40 text-white font-medium px-3 py-2 rounded-md"
+              >
+                Save
+              </button>
+            </div>
+          )}
+
+          {savedPath === "poll_query" && (
+            <div className="text-xs text-fern-300">Saved.</div>
+          )}
+        </div>
+      </Field>
+
+      <Field
+        label="Max emails per run"
+        hint="Hard cap so a sudden flood of mail doesn't overwhelm the agent."
+      >
+        <div className="flex items-center gap-3">
+          <input
+            type="number"
+            min={1}
+            max={200}
+            value={maxPerRun}
+            onChange={(e) =>
+              saveMaxPerRun(parseInt(e.target.value, 10) || 20)
+            }
+            className="w-24 bg-black/40 border border-white/15 rounded-md px-3 py-2 text-sm text-white focus:border-fern-500 outline-none"
+          />
+          {savedPath === "max_per_run" && (
+            <span className="text-xs text-fern-300">Saved.</span>
+          )}
+        </div>
+      </Field>
+
+      {error && (
+        <div className="text-xs text-red-400">{error}</div>
+      )}
+    </section>
   );
 }
 
