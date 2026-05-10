@@ -250,6 +250,15 @@ export async function cancelOrgScrapeRequest(input: {
   return r;
 }
 
+export async function dismissOrgScrapeRequest(input: {
+  requestId: string;
+}): Promise<Result> {
+  const { dismissScrapeRequestById } = await import("@/lib/db/scrape-requests");
+  const r = await dismissScrapeRequestById({ requestId: input.requestId });
+  if (r.ok) revalidatePath("/console/settings/business");
+  return r;
+}
+
 /**
  * Called from the dashboard loader on first sign-in: if the signed-in user
  * has no membership but there's a pending invite for their email, attach

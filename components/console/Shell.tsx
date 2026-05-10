@@ -10,7 +10,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /* ───────────── SIDEBAR ───────────── */
 
@@ -157,15 +157,94 @@ export function TopBar({
         <button className="text-xs text-white/55 hover:text-white px-3 py-1.5 rounded-md hover:bg-white/5 transition">
           Help
         </button>
-        <div className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white/5 cursor-pointer transition">
-          <div className="w-6 h-6 rounded-full bg-fern-700 text-white text-[10px] font-semibold flex items-center justify-center">
-            {user.slice(0, 2).toUpperCase()}
-          </div>
-          <span className="text-xs text-white/85">{user}</span>
-          <Caret />
-        </div>
+        <UserMenu user={user} isDemo={isDemo} />
       </div>
     </header>
+  );
+}
+
+function UserMenu({ user, isDemo }: { user: string; isDemo: boolean }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  // Click outside to close.
+  useEffect(() => {
+    if (!open) return;
+    function onDoc(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white/5 transition"
+      >
+        <div className="w-6 h-6 rounded-full bg-fern-700 text-white text-[10px] font-semibold flex items-center justify-center">
+          {user.slice(0, 2).toUpperCase()}
+        </div>
+        <span className="text-xs text-white/85">{user}</span>
+        <Caret />
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full mt-1.5 z-50 min-w-[180px] rounded-md border border-white/10 bg-[#0E1714] shadow-xl overflow-hidden"
+        >
+          <div className="px-3 py-2 border-b border-white/8">
+            <div className="text-xs text-white/55">Signed in as</div>
+            <div className="text-xs text-white/95 truncate">{user}</div>
+          </div>
+
+          <Link
+            href="/console/settings/business"
+            onClick={() => setOpen(false)}
+            className="plain block px-3 py-2 text-xs text-white/85 hover:bg-white/5 hover:text-white transition"
+          >
+            Settings
+          </Link>
+
+          {isDemo ? (
+            <Link
+              href="/"
+              onClick={() => setOpen(false)}
+              className="plain block px-3 py-2 text-xs text-white/85 hover:bg-white/5 hover:text-white transition border-t border-white/8"
+            >
+              Back to fernautomation.com
+            </Link>
+          ) : (
+            <form
+              action="/console/auth/signout"
+              method="post"
+              className="border-t border-white/8"
+            >
+              <button
+                type="submit"
+                className="block w-full text-left px-3 py-2 text-xs text-white/85 hover:bg-white/5 hover:text-white transition"
+              >
+                Sign out
+              </button>
+            </form>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

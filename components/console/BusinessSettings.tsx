@@ -8,6 +8,7 @@ import {
   cancelTeamInvite,
   createOrgKnowledgeDoc,
   deleteOrgKnowledgeDoc,
+  dismissOrgScrapeRequest,
   inviteTeamMember,
   removeTeamMember,
   requestOrgScrape,
@@ -88,6 +89,7 @@ export default function BusinessSettings({ data }: { data: BusinessSettingsData 
                     key={r.id}
                     request={r}
                     cancelAction={(id) => cancelOrgScrapeRequest({ requestId: id })}
+                    dismissAction={(id) => dismissOrgScrapeRequest({ requestId: id })}
                   />
                 ))}
               </div>

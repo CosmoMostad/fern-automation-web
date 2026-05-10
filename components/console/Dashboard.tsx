@@ -185,7 +185,7 @@ function AgentCard({ a }: { a: Agent }) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="rounded-xl border border-white/10 bg-white/[0.025] hover:bg-white/[0.04] hover:border-white/20 transition p-5 cursor-pointer h-full"
+      className="rounded-xl border border-white/15 bg-white/[0.06] hover:bg-white/[0.10] hover:border-white/30 transition p-5 cursor-pointer h-full"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
