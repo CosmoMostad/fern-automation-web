@@ -29,9 +29,9 @@ export default function ConversationsTab({ data }: { data: AgentDetailData }) {
         m.status === "approved" ||
         m.status === "sent")
   ).length;
-  const escalationsToday = todaysMessages.filter(
-    (m) => m.status === "escalated"
-  ).length;
+  // Use open_escalations (live DB count) rather than counting message statuses,
+  // which can lag or miss escalations created without a linked message_id.
+  const openEscalations = data.open_escalations.length;
 
   return (
     <div className="space-y-6">
@@ -40,9 +40,9 @@ export default function ConversationsTab({ data }: { data: AgentDetailData }) {
         <Stat label="Inbound today" value={inboundToday.toString()} />
         <Stat label="Drafted today" value={draftsToday.toString()} />
         <Stat
-          label="Escalated today"
-          value={escalationsToday.toString()}
-          warn={escalationsToday > 0}
+          label="Open escalations"
+          value={openEscalations.toString()}
+          warn={openEscalations > 0}
         />
       </div>
 
