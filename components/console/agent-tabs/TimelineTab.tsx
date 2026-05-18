@@ -15,14 +15,16 @@ export default function TimelineTab({ data }: { data: AgentDetailData }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [openId, setOpenId] = useState<string | null>(null);
 
-  const filtered = data.recent_messages.filter((m) => {
-    if (filter === "all") return true;
-    if (filter === "inbound") return m.direction === "inbound";
-    if (filter === "outbound") return m.direction === "outbound";
-    if (filter === "pending") return m.status === "pending_approval";
-    if (filter === "escalated") return m.status === "escalated";
-    return true;
-  });
+  const filtered = data.recent_messages
+    .filter((m) => {
+      if (filter === "all") return true;
+      if (filter === "inbound") return m.direction === "inbound";
+      if (filter === "outbound") return m.direction === "outbound";
+      if (filter === "pending") return m.status === "pending_approval";
+      if (filter === "escalated") return m.status === "escalated";
+      return true;
+    })
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   if (data.recent_messages.length === 0) {
     return <EmptyState agentName={data.agent.name} />;
